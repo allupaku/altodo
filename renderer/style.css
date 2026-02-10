@@ -324,40 +324,53 @@ button:not(:disabled):hover {
   margin-left: 0;
 }
 
-.done-toggle {
-  display: inline-flex;
+.todo-left {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding-top: 4px;
+  gap: 8px;
   grid-column: 1;
   grid-row: 1 / span 2;
   align-self: start;
+  padding-top: 4px;
+}
+
+.done-toggle {
+  display: inline-flex;
+  align-items: center;
 }
 
 .done-toggle input {
   width: 18px;
   height: 18px;
   appearance: none;
-  border: 2px solid #9ca3af;
-  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
   background: #ffffff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  color: #9ca3af;
+}
+
+.done-toggle input::after {
+  content: '';
+  width: 6px;
+  height: 10px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
 }
 
 .done-toggle input:checked {
-  background: #16a34a;
+  color: #16a34a;
   border-color: #16a34a;
 }
 
-.done-toggle input:checked::after {
-  content: '';
-  width: 8px;
-  height: 8px;
-  background: #ffffff;
-  border-radius: 999px;
-  display: block;
+.done-toggle input.overdue {
+  color: #fca5a5;
+  border-color: #fca5a5;
 }
 
 .todo-header-actions {
@@ -383,6 +396,13 @@ button:not(:disabled):hover {
   width: 46px;
   height: 46px;
   font-size: 19px;
+}
+
+.recurrence-inline,
+.tag-inline {
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
 }
 
 .todo-meta {
@@ -535,8 +555,11 @@ button:not(:disabled):hover {
   grid-column: 2;
   grid-row: 2;
   border-bottom: 1px solid var(--border);
-  padding: 4px 0;
-  height: 22px;
+  padding: 0;
+  height: 0;
+  margin-top: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .todo-body[contenteditable="true"] {
@@ -549,6 +572,15 @@ button:not(:disabled):hover {
   background: transparent;
   color: var(--text);
   cursor: text;
+}
+
+.todo-item:hover .todo-body,
+.todo-item.active .todo-body {
+  padding: 4px 0;
+  height: 22px;
+  margin-top: 6px;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .todo-item.active .todo-title {
