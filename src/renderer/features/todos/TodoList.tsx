@@ -34,16 +34,38 @@ function SectionDroppable({ id, children }: { id: string; children: React.ReactN
   );
 }
 
-function SortableWrapper({ id, children }: { id: string; children: React.ReactNode }) {
+type DragHandleProps = {
+  attributes: React.HTMLAttributes<HTMLElement>;
+  listeners: Record<string, (event: React.SyntheticEvent) => void>;
+};
+
+function SortableWrapper({
+  id,
+  children,
+}: {
+  id: string;
+  children: (handleProps: DragHandleProps, isDragging: boolean) => React.ReactNode;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const safeListeners = React.useMemo(() => {
+    const result: Record<string, (event: React.SyntheticEvent) => void> = {};
+    if (!listeners) return result;
+    Object.entries(listeners).forEach(([key, handler]) => {
+      result[key] = (event: React.SyntheticEvent) => {
+        event.stopPropagation();
+        (handler as (evt: React.SyntheticEvent) => void)(event);
+      };
+    });
+    return result;
+  }, [listeners]);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.7 : 1,
   } as React.CSSProperties;
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
+    <div ref={setNodeRef} style={style}>
+      {children({ attributes, listeners: safeListeners }, isDragging)}
     </div>
   );
 }
@@ -258,26 +280,30 @@ export default function TodoList({
                   const isActive = selectedId === todo.id;
                   return (
                     <SortableWrapper key={todo.id} id={todo.id}>
-                      <TodoItem
-                        todo={todo}
-                        cache={isActive ? activeCache : null}
-                        isActive={isActive}
-                        isDraft={false}
-                        rowIndex={rowIndexRef.value++}
-                        pendingDelete={pendingDeleteId === todo.id}
-                        onSelect={() => onSelect(todo)}
-                        onActivateField={onActivateField}
-                        onUpdateCache={onUpdateCache}
-                        onToggleDone={(done) => onToggleDone(todo, done)}
-                        onSave={onSave}
-                        onRequestDelete={() => onRequestDelete(todo)}
-                        onConfirmDelete={() => onConfirmDelete(todo)}
-                        onConfirmDeleteSeries={() => onConfirmDeleteSeries(todo)}
-                        onCancelDelete={onCancelDelete}
-                        onOpenRecurrence={() => onOpenRecurrence(todo)}
-                        onOpenTags={() => onOpenTags(todo)}
-                        onSuspendAutoSave={onSuspendAutoSave}
-                      />
+                      {(handleProps, isDragging) => (
+                        <TodoItem
+                          todo={todo}
+                          cache={isActive ? activeCache : null}
+                          isActive={isActive}
+                          isDraft={false}
+                          isDragging={isDragging}
+                          dragHandleProps={handleProps}
+                          rowIndex={rowIndexRef.value++}
+                          pendingDelete={pendingDeleteId === todo.id}
+                          onSelect={() => onSelect(todo)}
+                          onActivateField={onActivateField}
+                          onUpdateCache={onUpdateCache}
+                          onToggleDone={(done) => onToggleDone(todo, done)}
+                          onSave={onSave}
+                          onRequestDelete={() => onRequestDelete(todo)}
+                          onConfirmDelete={() => onConfirmDelete(todo)}
+                          onConfirmDeleteSeries={() => onConfirmDeleteSeries(todo)}
+                          onCancelDelete={onCancelDelete}
+                          onOpenRecurrence={() => onOpenRecurrence(todo)}
+                          onOpenTags={() => onOpenTags(todo)}
+                          onSuspendAutoSave={onSuspendAutoSave}
+                        />
+                      )}
                     </SortableWrapper>
                   );
                 })}

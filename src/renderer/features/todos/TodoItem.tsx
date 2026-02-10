@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { TodoListItem } from '../../../shared/models/todo';
 import type { EditCache } from './types';
 import { formatDate, recurrenceLabel, remindLabel, statusLabel } from './todoUtils';
@@ -10,6 +10,11 @@ interface TodoItemProps {
   cache: EditCache | null;
   isActive: boolean;
   isDraft: boolean;
+  isDragging?: boolean;
+  dragHandleProps?: {
+    attributes: React.HTMLAttributes<HTMLElement>;
+    listeners: Record<string, (event: React.SyntheticEvent) => void>;
+  };
   rowIndex: number;
   pendingDelete: boolean;
   onSelect: () => void;
@@ -31,6 +36,8 @@ export default function TodoItem({
   cache,
   isActive,
   isDraft,
+  isDragging = false,
+  dragHandleProps,
   rowIndex,
   pendingDelete,
   onSelect,
@@ -46,6 +53,8 @@ export default function TodoItem({
   onOpenTags,
   onSuspendAutoSave,
 }: TodoItemProps) {
+  const titleRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const effective = cache || {
     title: todo.title || '',
     body: '',
@@ -72,11 +81,34 @@ export default function TodoItem({
   const tags = effective.tags || todo.tags || [];
 
   const showOverdue = !isDraft && statusValue !== 'done' && (isOverdue || isDeferred);
+  const titleValue = isDraft ? effective.title : effective.title || todo.title || '';
+  const bodyValue = isActive ? effective.body : todo.excerpt || '';
+  const isEditingTitle = isActive;
+  const isEditingBody = isActive;
+
+  useEffect(() => {
+    if (!titleRef.current) return;
+    if (isEditingTitle) return;
+    if (titleRef.current.innerText !== titleValue) {
+      titleRef.current.innerText = titleValue;
+    }
+  }, [titleValue, isEditingTitle]);
+
+  useEffect(() => {
+    if (!bodyRef.current) return;
+    if (isEditingBody) return;
+    if (bodyRef.current.innerText !== bodyValue) {
+      bodyRef.current.innerText = bodyValue;
+    }
+  }, [bodyValue, isEditingBody]);
 
   return (
     <div
       className={`todo-item ${rowIndex % 2 === 1 ? 'row-alt' : ''} ${isActive ? 'active' : ''}`}
-      onClick={onSelect}
+      onClick={() => {
+        if (isDragging) return;
+        onSelect();
+      }}
     >
       <div className="todo-left">
         {!isDraft && (
@@ -88,6 +120,17 @@ export default function TodoItem({
               className={showOverdue ? 'overdue' : ''}
             />
           </label>
+        )}
+        {dragHandleProps && (
+          <button
+            className="icon plain drag-handle-btn"
+            type="button"
+            {...dragHandleProps.attributes}
+            {...dragHandleProps.listeners}
+            onClick={(event) => event.stopPropagation()}
+          >
+            ⋮⋮
+          </button>
         )}
         {!isDraft && (
           <button className="icon plain recurrence-inline" type="button" onClick={(event) => {
@@ -101,21 +144,26 @@ export default function TodoItem({
       <div className="todo-header-left">
         <div
           className="todo-title"
-          contentEditable={isActive}
+          contentEditable={isActive && !isDragging}
           suppressContentEditableWarning
+          ref={titleRef}
+          data-placeholder="Title"
           onClick={(event) => {
             event.stopPropagation();
-            if (isActive) {
-              onActivateField('title');
+            if (!isActive) {
+              onSelect();
+              return;
             }
+            onActivateField('title');
+          }}
+          onFocus={() => {
+            if (isActive) onActivateField('title');
           }}
           onInput={(event) => {
-            const next = (event.target as HTMLElement).innerText.trimStart();
+            const next = (event.target as HTMLElement).innerText;
             onUpdateCache({ title: next });
           }}
-        >
-          {isDraft ? effective.title : effective.title || todo.title}
-        </div>
+        />
         <div className="todo-meta">
           <div className="todo-meta-row">
             <span className="todo-status" style={{ display: statusValue !== 'todo' ? 'inline-flex' : 'none' }}>
@@ -209,21 +257,26 @@ export default function TodoItem({
       </div>
       <div
         className="todo-body"
-        contentEditable={isActive}
+        contentEditable={isActive && !isDragging}
         suppressContentEditableWarning
+        ref={bodyRef}
+        data-placeholder="Description"
         onClick={(event) => {
           event.stopPropagation();
-          if (isActive) {
-            onActivateField('body');
+          if (!isActive) {
+            onSelect();
+            return;
           }
+          onActivateField('body');
+        }}
+        onFocus={() => {
+          if (isActive) onActivateField('body');
         }}
         onInput={(event) => {
-          const next = (event.target as HTMLElement).innerText.replace(/\n+/g, ' ');
+          const next = (event.target as HTMLElement).innerText;
           onUpdateCache({ body: next });
         }}
-      >
-        {isActive ? effective.body : todo.excerpt || ''}
-      </div>
+      />
       {todo.updatedMs && !isDraft && (
         <div className="todo-updated">Updated {formatDate(todo.updatedMs)}</div>
       )}

@@ -65,9 +65,10 @@ export default function TodoShell() {
               id="settingsToggle"
               className="ghost"
               type="button"
-              onClick={() => setSettingsOpen((prev) => !prev)}
+              onClick={() => setSettingsOpen(true)}
+              disabled={settingsOpen}
             >
-              {settingsOpen ? 'Close' : 'Settings'}
+              Settings
             </button>
           </div>
         </div>
@@ -129,21 +130,24 @@ export default function TodoShell() {
           />
         </section>
       </main>
-      <div className="tabs bottom">
-        <button
-          className={`tab ${currentTab === 'todo' ? 'active' : ''}`}
-          type="button"
-          onClick={() => actions.setCurrentTab('todo')}
-        >
-          Todo ({todoCount})
-        </button>
-        <button
-          className={`tab ${currentTab === 'done' ? 'active' : ''}`}
-          type="button"
-          onClick={() => actions.setCurrentTab('done')}
-        >
-          Done ({doneCount})
-        </button>
+      <div className="bottom-bar">
+        <div className="tabs bottom tabset">
+          <button
+            className={`tab ${currentTab === 'todo' ? 'active' : ''}`}
+            type="button"
+            onClick={() => actions.setCurrentTab('todo')}
+          >
+            Todo ({todoCount})
+          </button>
+          <button
+            className={`tab ${currentTab === 'done' ? 'active' : ''}`}
+            type="button"
+            onClick={() => actions.setCurrentTab('done')}
+          >
+            Done ({doneCount})
+          </button>
+        </div>
+        {gitStatusLine && <footer className="git-status">{gitStatusLine}</footer>}
       </div>
       <button id="add" className="fab" title="New todo" type="button" onClick={actions.triggerNewTodo}>
         +
@@ -187,7 +191,6 @@ export default function TodoShell() {
           <option key={item} value={item} />
         ))}
       </datalist>
-      {gitStatusLine && <footer className="git-status">{gitStatusLine}</footer>}
     </div>
   );
 }
