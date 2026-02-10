@@ -1,16 +1,30 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { TodoApi } from '../shared/ipc/bridge';
 
-type ChannelsModule = typeof import('../shared/ipc/channels');
-// Preload runs in a sandboxed context; prefer a local copy, fallback to dist/shared for dev.
-function loadChannels(): ChannelsModule {
-  try {
-    return require('./shared/ipc/channels') as ChannelsModule;
-  } catch {
-    return require('../shared/ipc/channels') as ChannelsModule;
-  }
-}
-const { IPC_CHANNELS, IPC_EVENTS } = loadChannels();
+type ChannelsType = typeof import('../shared/ipc/channels').IPC_CHANNELS;
+type EventsType = typeof import('../shared/ipc/channels').IPC_EVENTS;
+
+// Inline channels for preload to avoid sandboxed require resolution issues.
+const IPC_CHANNELS: ChannelsType = {
+  TODOS_LIST: 'todos:list',
+  TODOS_READ: 'todos:read',
+  TODOS_SAVE: 'todos:save',
+  TODOS_DELETE: 'todos:delete',
+  TODOS_DELETE_SERIES: 'todos:delete-series',
+  TODOS_MOVE_DUE: 'todos:move-due',
+  TODOS_REORDER: 'todos:reorder',
+  SETTINGS_GET: 'settings:get',
+  SETTINGS_SET: 'settings:set',
+  DISPLAYS_LIST: 'displays:list',
+  GIT_STATUS: 'git:status',
+};
+
+const IPC_EVENTS: EventsType = {
+  TODOS_CHANGED: 'todos-changed',
+  DISPLAYS_CHANGED: 'displays-changed',
+  SHORTCUT: 'shortcut',
+  GIT_STATUS: 'git-status',
+};
 
 const api: TodoApi = {
   listTodos: () => ipcRenderer.invoke(IPC_CHANNELS.TODOS_LIST),
