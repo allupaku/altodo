@@ -258,29 +258,34 @@ export function useTodoController(): UseTodoControllerResult {
     if (!activeCache || !selectedId) return;
     if (!activeCache.dirty && !options.exit) return;
     isSavingRef.current = true;
-    const computedStatus = computeStatusForSave(activeCache, false);
-    const payload: TodoSavePayload = {
-      id: selectedId,
-      title: activeCache.title || 'Untitled',
-      body: activeCache.body || '',
-      due: activeCache.due || null,
-      status: computedStatus,
-      remind: activeCache.remind || 'none',
-      priority: activeCache.priority || 'normal',
-      recurrence: activeCache.recurrence || 'none',
-      recurrenceEnd: activeCache.recurrenceEnd || null,
-      recurrenceCount: typeof activeCache.recurrenceCount === 'number' ? activeCache.recurrenceCount : null,
-      tags: activeCache.tags || [],
-      order: activeCache.order ?? null,
-    };
-    await saveTodoPayload(payload, options.exit);
-    setActiveCache({
-      ...activeCache,
-      status: computedStatus,
-      dirty: false,
-      originalDue: activeCache.due || '',
-    });
-    isSavingRef.current = false;
+    try {
+      const computedStatus = computeStatusForSave(activeCache, false);
+      const payload: TodoSavePayload = {
+        id: selectedId,
+        title: activeCache.title || 'Untitled',
+        body: activeCache.body || '',
+        due: activeCache.due || null,
+        status: computedStatus,
+        remind: activeCache.remind || 'none',
+        priority: activeCache.priority || 'normal',
+        recurrence: activeCache.recurrence || 'none',
+        recurrenceEnd: activeCache.recurrenceEnd || null,
+        recurrenceCount: typeof activeCache.recurrenceCount === 'number' ? activeCache.recurrenceCount : null,
+        tags: activeCache.tags || [],
+        order: activeCache.order ?? null,
+      };
+      await saveTodoPayload(payload, options.exit);
+      setActiveCache({
+        ...activeCache,
+        status: computedStatus,
+        dirty: false,
+        originalDue: activeCache.due || '',
+      });
+    } catch (error) {
+      console.error('Failed to save todo', error);
+    } finally {
+      isSavingRef.current = false;
+    }
   }
 
   async function saveDraft() {
@@ -291,24 +296,29 @@ export function useTodoController(): UseTodoControllerResult {
       return;
     }
     isSavingRef.current = true;
-    const payload: TodoSavePayload = {
-      id: null,
-      title: draftCache.title || 'Untitled',
-      body: draftCache.body || '',
-      due: draftCache.due || null,
-      status: computeStatusForSave(draftCache, true),
-      remind: draftCache.remind || 'none',
-      priority: draftCache.priority || 'normal',
-      recurrence: draftCache.recurrence || 'none',
-      recurrenceEnd: draftCache.recurrenceEnd || null,
-      recurrenceCount: typeof draftCache.recurrenceCount === 'number' ? draftCache.recurrenceCount : null,
-      tags: draftCache.tags || [],
-      order: draftCache.order ?? null,
-    };
-    await saveTodoPayload(payload, true);
-    setDraftCache(null);
-    setDraftOpen(false);
-    isSavingRef.current = false;
+    try {
+      const payload: TodoSavePayload = {
+        id: null,
+        title: draftCache.title || 'Untitled',
+        body: draftCache.body || '',
+        due: draftCache.due || null,
+        status: computeStatusForSave(draftCache, true),
+        remind: draftCache.remind || 'none',
+        priority: draftCache.priority || 'normal',
+        recurrence: draftCache.recurrence || 'none',
+        recurrenceEnd: draftCache.recurrenceEnd || null,
+        recurrenceCount: typeof draftCache.recurrenceCount === 'number' ? draftCache.recurrenceCount : null,
+        tags: draftCache.tags || [],
+        order: draftCache.order ?? null,
+      };
+      await saveTodoPayload(payload, true);
+      setDraftCache(null);
+      setDraftOpen(false);
+    } catch (error) {
+      console.error('Failed to save draft todo', error);
+    } finally {
+      isSavingRef.current = false;
+    }
   }
 
   function discardDraft() {
