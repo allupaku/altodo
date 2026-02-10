@@ -12,10 +12,12 @@ A lightweight, markdown-backed todo app with optional Git sync.
 - Recurring todos: daily, weekdays, weekly, biweekly, monthly.
 - Recurrence editing with automatic end-date/occurrence calculation and preview.
 - Recurrence instances auto-create the next due date when completed.
-- Tags with autocomplete, tag chips, and tag-based filtering.
+- Tags with autocomplete, tag chips, and tag-based filtering (multi-tag AND).
+- Follow-up tagging workflow for 1:1 agendas and manager check-ins.
 - Alternating row backgrounds for visual scanning.
 - Draft mode for new todos with placeholder title/body.
 - End-of-day rollover: overdue items from yesterday move to today and become high priority.
+- Drag-and-drop between due-date sections (enabled when sorting by due date).
 - Optional Git sync with auto-commit + push and last commit message display.
 
 ## Data Format
@@ -33,6 +35,12 @@ Install and run:
 ```bash
 npm install
 npm run dev
+```
+
+Run tests:
+
+```bash
+npm test
 ```
 
 ## Build For Distribution
@@ -72,6 +80,18 @@ Notes:
 - Cross-compiling is limited. For best results, build on the target OS.
 - If you want CI builds, add a GitHub Actions workflow for each platform.
   - See `.github/workflows/build.yml` for a ready-to-use workflow.
+
+### Manual Builds
+
+You can also produce production bundles locally:
+
+```bash
+npm run build
+```
+
+This creates:
+- `dist/main/main.js` (Electron main process)
+- `dist/renderer/` (Vite-built React UI)
 
 ## Git Sync (Optional)
 
