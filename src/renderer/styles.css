@@ -29,6 +29,14 @@ body {
   overflow: hidden;
 }
 
+input,
+textarea,
+[contenteditable="true"] {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+
 #root {
   height: 100vh;
 }

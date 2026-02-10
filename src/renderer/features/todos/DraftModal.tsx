@@ -60,6 +60,7 @@ export default function DraftModal({ open, cache, tags, onClose, onSave, onChang
             contentEditable
             data-placeholder="Todo title"
             dir="ltr"
+            style={{ unicodeBidi: 'plaintext' }}
             suppressContentEditableWarning
             onInput={(event) => {
               const next = (event.target as HTMLElement).innerText;
@@ -218,6 +219,7 @@ export default function DraftModal({ open, cache, tags, onClose, onSave, onChang
           contentEditable
           data-placeholder="Details..."
           dir="ltr"
+          style={{ unicodeBidi: 'plaintext' }}
           suppressContentEditableWarning
           onInput={(event) => {
             const next = (event.target as HTMLElement).innerText;

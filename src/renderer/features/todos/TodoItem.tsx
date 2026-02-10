@@ -148,6 +148,8 @@ export default function TodoItem({
           suppressContentEditableWarning
           ref={titleRef}
           data-placeholder="Title"
+          dir="ltr"
+          style={{ unicodeBidi: 'plaintext' }}
           onClick={(event) => {
             event.stopPropagation();
             if (!isActive) {
@@ -261,6 +263,8 @@ export default function TodoItem({
         suppressContentEditableWarning
         ref={bodyRef}
         data-placeholder="Description"
+        dir="ltr"
+        style={{ unicodeBidi: 'plaintext' }}
         onClick={(event) => {
           event.stopPropagation();
           if (!isActive) {
