@@ -46,6 +46,7 @@ export default function TodoShell() {
       : 'Git sync enabled'
     : '';
   const isEmpty = todos.length === 0 && !draftCache;
+  const dndEnabled = sortKey === 'due' && currentTab === 'todo';
 
   return (
     <div id="app" className={isEmpty ? 'empty' : ''}>
@@ -98,6 +99,7 @@ export default function TodoShell() {
             currentTab={currentTab}
             sortKey={sortKey}
             filterText={filterText}
+            dndEnabled={dndEnabled}
             pendingDeleteId={pendingDeleteId}
             onSelect={actions.selectTodo}
             onActivateField={actions.activateField}
@@ -113,6 +115,8 @@ export default function TodoShell() {
             onBulkDone={actions.bulkMarkDone}
             onBulkDelete={actions.bulkDelete}
             onSuspendAutoSave={actions.setSuspendAutoSave}
+            onMoveDue={actions.moveTodoDue}
+            onReorder={actions.reorderTodos}
           />
         </section>
       </main>

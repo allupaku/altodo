@@ -64,6 +64,8 @@ interface UseTodoControllerResult {
     bulkMarkDone: (items: TodoListItem[], label: string) => Promise<void>;
     bulkDelete: (items: TodoListItem[], label: string) => Promise<void>;
     setSuspendAutoSave: (value: boolean) => void;
+    moveTodoDue: (id: string, due: string | null, order?: number | null) => Promise<void>;
+    reorderTodos: (ids: string[]) => Promise<void>;
   };
 }
 
@@ -500,6 +502,16 @@ export function useTodoController(): UseTodoControllerResult {
     await reloadTodos();
   }
 
+  async function moveTodoDue(id: string, due: string | null, order?: number | null) {
+    await api.moveTodoDue(id, due, order ?? null);
+    await reloadTodos();
+  }
+
+  async function reorderTodos(ids: string[]) {
+    await api.reorderTodos(ids);
+    await reloadTodos();
+  }
+
   useEffect(() => {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
@@ -629,6 +641,8 @@ export function useTodoController(): UseTodoControllerResult {
       setSuspendAutoSave: (value: boolean) => {
         suspendAutoSave.current = value;
       },
+      moveTodoDue,
+      reorderTodos,
     },
   };
 }

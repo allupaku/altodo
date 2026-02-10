@@ -1,4 +1,14 @@
 import React from 'react';
+import {
+  DndContext,
+  PointerSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { TodoListItem } from '../../../shared/models/todo';
 import type { EditCache, SortKey, TabKey } from './types';
 import {
@@ -15,6 +25,29 @@ import {
 import TodoItem from './TodoItem';
 import SectionHeader from './SectionHeader';
 
+function SectionDroppable({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} data-section={id}>
+      {children}
+    </div>
+  );
+}
+
+function SortableWrapper({ id, children }: { id: string; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+  } as React.CSSProperties;
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+}
+
 interface TodoListProps {
   todos: TodoListItem[];
   activeCache: EditCache | null;
@@ -23,6 +56,7 @@ interface TodoListProps {
   currentTab: TabKey;
   sortKey: SortKey;
   filterText: string;
+  dndEnabled: boolean;
   pendingDeleteId: string | null;
   onSelect: (todo: TodoListItem) => void;
   onActivateField: (field: EditCache['activeField']) => void;
@@ -38,6 +72,8 @@ interface TodoListProps {
   onBulkDone: (items: TodoListItem[], label: string) => void;
   onBulkDelete: (items: TodoListItem[], label: string) => void;
   onSuspendAutoSave: (value: boolean) => void;
+  onMoveDue: (id: string, due: string | null, order?: number | null) => Promise<void>;
+  onReorder: (ids: string[]) => Promise<void>;
 }
 
 export default function TodoList({
@@ -48,6 +84,7 @@ export default function TodoList({
   currentTab,
   sortKey,
   filterText,
+  dndEnabled,
   pendingDeleteId,
   onSelect,
   onActivateField,
@@ -63,6 +100,8 @@ export default function TodoList({
   onBulkDone,
   onBulkDelete,
   onSuspendAutoSave,
+  onMoveDue,
+  onReorder,
 }: TodoListProps) {
   const today = new Date();
   let items = todos.filter((todo) => !todo.isDraft);
@@ -104,50 +143,149 @@ export default function TodoList({
       const key = getSectionKey(todo, todayKey, tomorrowKey, endOfWeekKey, nextWeekKey, isFriday);
       bucketed[key].push(todo);
     });
-    let rowIndex = 0;
+    const sectionItemsMap = sections.map((section) => ({
+      section,
+      items: sortItems(bucketed[section.key] || [], sortKey, currentTab),
+    }));
+    const idToSection = new Map<string, string>();
+    sectionItemsMap.forEach(({ section, items: sectionItems }) => {
+      sectionItems.forEach((todo) => idToSection.set(todo.id, section.key));
+    });
+
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+    async function handleDragEnd(event: DragEndEvent) {
+      if (!event.over) return;
+      const activeId = String(event.active.id);
+      const overId = String(event.over.id);
+      if (activeId === overId) return;
+      const sourceSection = idToSection.get(activeId);
+      if (!sourceSection) return;
+      const targetSection = overId.startsWith('section:')
+        ? overId.replace('section:', '')
+        : idToSection.get(overId);
+      if (!targetSection) return;
+      const sourceIds = sectionItemsMap.find((entry) => entry.section.key === sourceSection)?.items.map((todo) => todo.id) || [];
+      const targetIds = sectionItemsMap.find((entry) => entry.section.key === targetSection)?.items.map((todo) => todo.id) || [];
+      if (sourceSection === targetSection) {
+        const oldIndex = sourceIds.indexOf(activeId);
+        const newIndex = overId.startsWith('section:') ? sourceIds.length - 1 : sourceIds.indexOf(overId);
+        if (oldIndex < 0 || newIndex < 0) return;
+        const nextIds = arrayMove(sourceIds, oldIndex, newIndex);
+        await onReorder(nextIds);
+        return;
+      }
+      const targetIndex = overId.startsWith('section:') ? targetIds.length : targetIds.indexOf(overId);
+      if (targetIndex < 0) return;
+      const nextTargetIds = [...targetIds];
+      nextTargetIds.splice(targetIndex, 0, activeId);
+      const nextSourceIds = sourceIds.filter((id) => id !== activeId);
+      const targetConfig = sections.find((section) => section.key === targetSection);
+      const targetDue = targetConfig ? targetConfig.targetDue : null;
+      await onMoveDue(activeId, targetDue, targetIndex + 1);
+      if (nextSourceIds.length) {
+        await onReorder(nextSourceIds);
+      }
+      await onReorder(nextTargetIds);
+    }
+
+    const renderSectionItems = (sectionItems: TodoListItem[], rowIndexRef: { value: number }) =>
+      sectionItems.map((todo) => {
+        const isActive = selectedId === todo.id;
+        return (
+          <TodoItem
+            key={todo.id}
+            todo={todo}
+            cache={isActive ? activeCache : null}
+            isActive={isActive}
+            isDraft={false}
+            rowIndex={rowIndexRef.value++}
+            pendingDelete={pendingDeleteId === todo.id}
+            onSelect={() => onSelect(todo)}
+            onActivateField={onActivateField}
+            onUpdateCache={onUpdateCache}
+            onToggleDone={(done) => onToggleDone(todo, done)}
+            onSave={onSave}
+            onRequestDelete={() => onRequestDelete(todo)}
+            onConfirmDelete={() => onConfirmDelete(todo)}
+            onConfirmDeleteSeries={() => onConfirmDeleteSeries(todo)}
+            onCancelDelete={onCancelDelete}
+            onOpenRecurrence={() => onOpenRecurrence(todo)}
+            onOpenTags={() => onOpenTags(todo)}
+            onSuspendAutoSave={onSuspendAutoSave}
+          />
+        );
+      });
+
+    if (!dndEnabled) {
+      const rowIndexRef = { value: 0 };
+      return (
+        <>
+          {sectionItemsMap.map(({ section, items: sectionItems }) => {
+            if (!sectionItems.length) return null;
+            return (
+              <React.Fragment key={section.key}>
+                <SectionHeader
+                  label={section.label}
+                  items={sectionItems}
+                  onBulkDone={() => onBulkDone(sectionItems, section.label)}
+                  onBulkDelete={() => onBulkDelete(sectionItems, section.label)}
+                />
+                {renderSectionItems(sectionItems, rowIndexRef)}
+              </React.Fragment>
+            );
+          })}
+        </>
+      );
+    }
+
+    const rowIndexRef = { value: 0 };
     return (
-      <>
-        {sections.map((section) => {
-          const sectionItems = sortItems(bucketed[section.key] || [], sortKey, currentTab);
-          if (!sectionItems.length) return null;
-          return (
-            <React.Fragment key={section.key}>
-              <SectionHeader
-                label={section.label}
-                items={sectionItems}
-                onBulkDone={() => onBulkDone(sectionItems, section.label)}
-                onBulkDelete={() => onBulkDelete(sectionItems, section.label)}
-              />
-              {sectionItems.map((todo) => {
-                const isActive = selectedId === todo.id;
-                return (
-                  <TodoItem
-                    key={todo.id}
-                    todo={todo}
-                    cache={isActive ? activeCache : null}
-                    isActive={isActive}
-                    isDraft={false}
-                    rowIndex={rowIndex++}
-                    pendingDelete={pendingDeleteId === todo.id}
-                    onSelect={() => onSelect(todo)}
-                    onActivateField={onActivateField}
-                    onUpdateCache={onUpdateCache}
-                    onToggleDone={(done) => onToggleDone(todo, done)}
-                    onSave={onSave}
-                    onRequestDelete={() => onRequestDelete(todo)}
-                    onConfirmDelete={() => onConfirmDelete(todo)}
-                    onConfirmDeleteSeries={() => onConfirmDeleteSeries(todo)}
-                    onCancelDelete={onCancelDelete}
-                    onOpenRecurrence={() => onOpenRecurrence(todo)}
-                    onOpenTags={() => onOpenTags(todo)}
-                    onSuspendAutoSave={onSuspendAutoSave}
-                  />
-                );
-              })}
-            </React.Fragment>
-          );
-        })}
-      </>
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        {sectionItemsMap.map(({ section, items: sectionItems }) => (
+          <React.Fragment key={section.key}>
+            <SectionHeader
+              label={section.label}
+              items={sectionItems}
+              onBulkDone={() => onBulkDone(sectionItems, section.label)}
+              onBulkDelete={() => onBulkDelete(sectionItems, section.label)}
+              showWhenEmpty
+            />
+            <SectionDroppable id={`section:${section.key}`}>
+              <SortableContext items={sectionItems.map((todo) => todo.id)} strategy={verticalListSortingStrategy}>
+                {sectionItems.length === 0 && <div className="section-empty">Drop here</div>}
+                {sectionItems.map((todo) => {
+                  const isActive = selectedId === todo.id;
+                  return (
+                    <SortableWrapper key={todo.id} id={todo.id}>
+                      <TodoItem
+                        todo={todo}
+                        cache={isActive ? activeCache : null}
+                        isActive={isActive}
+                        isDraft={false}
+                        rowIndex={rowIndexRef.value++}
+                        pendingDelete={pendingDeleteId === todo.id}
+                        onSelect={() => onSelect(todo)}
+                        onActivateField={onActivateField}
+                        onUpdateCache={onUpdateCache}
+                        onToggleDone={(done) => onToggleDone(todo, done)}
+                        onSave={onSave}
+                        onRequestDelete={() => onRequestDelete(todo)}
+                        onConfirmDelete={() => onConfirmDelete(todo)}
+                        onConfirmDeleteSeries={() => onConfirmDeleteSeries(todo)}
+                        onCancelDelete={onCancelDelete}
+                        onOpenRecurrence={() => onOpenRecurrence(todo)}
+                        onOpenTags={() => onOpenTags(todo)}
+                        onSuspendAutoSave={onSuspendAutoSave}
+                      />
+                    </SortableWrapper>
+                  );
+                })}
+              </SortableContext>
+            </SectionDroppable>
+          </React.Fragment>
+        ))}
+      </DndContext>
     );
   }
 

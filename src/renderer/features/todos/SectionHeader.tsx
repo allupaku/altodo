@@ -6,25 +6,41 @@ interface SectionHeaderProps {
   items: TodoListItem[];
   onBulkDone: () => void;
   onBulkDelete: () => void;
+  showWhenEmpty?: boolean;
 }
 
-export default function SectionHeader({ label, items, onBulkDone, onBulkDelete }: SectionHeaderProps) {
-  if (!items.length) return null;
+export default function SectionHeader({
+  label,
+  items,
+  onBulkDone,
+  onBulkDelete,
+  showWhenEmpty = false,
+}: SectionHeaderProps) {
+  if (!items.length && !showWhenEmpty) return null;
   return (
     <div className="section-header with-actions">
       <span>{label}</span>
       <div className="section-actions">
-        <button className="icon plain" title={`Mark ${label} todos as done`} type="button" onClick={onBulkDone}>
-          ✓✓
-        </button>
-        <button
-          className="icon plain danger-text"
-          title={`Delete ${label} todos`}
-          type="button"
-          onClick={onBulkDelete}
-        >
-          🧹
-        </button>
+        {items.length > 0 && (
+          <>
+            <button
+              className="icon plain"
+              title={`Mark ${label} todos as done`}
+              type="button"
+              onClick={onBulkDone}
+            >
+              ✓✓
+            </button>
+            <button
+              className="icon plain danger-text"
+              title={`Delete ${label} todos`}
+              type="button"
+              onClick={onBulkDelete}
+            >
+              🧹
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ export interface TodoApi {
   saveTodo: (payload: TodoSavePayload) => Promise<{ id: string }>;
   deleteTodo: (id: string) => Promise<boolean>;
   deleteTodoSeries: (id: string) => Promise<boolean>;
-  moveTodoDue: (id: string, due: string | null) => Promise<{ id: string } | null>;
+  moveTodoDue: (id: string, due: string | null, order?: number | null) => Promise<{ id: string } | null>;
   reorderTodos: (ids: string[]) => Promise<boolean>;
   getSettings: () => Promise<AppSettings>;
   setSettings: (next: Partial<AppSettings>) => Promise<AppSettings>;

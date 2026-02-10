@@ -47,7 +47,7 @@ export interface IpcContracts {
     response: boolean;
   };
   [IPC_CHANNELS.TODOS_MOVE_DUE]: {
-    request: { id: string; due: string | null };
+    request: { id: string; due: string | null; order?: number | null };
     response: { id: string } | null;
   };
   [IPC_CHANNELS.TODOS_REORDER]: {

@@ -37,12 +37,20 @@ export function registerIpcHandlers(deps: IpcHandlerDeps) {
     deps.onTodosChanged();
     return result;
   });
-  ipcMain.handle(IPC_CHANNELS.TODOS_MOVE_DUE, async (_evt, payload: { id: string; due: string | null }) => {
-    const result = await todosStore.moveTodoToDue(payload.id, payload.due, deps.gitSync.scheduleCommit);
-    await deps.reminders.scheduleReminders();
-    deps.onTodosChanged();
-    return result;
-  });
+  ipcMain.handle(
+    IPC_CHANNELS.TODOS_MOVE_DUE,
+    async (_evt, payload: { id: string; due: string | null; order?: number | null }) => {
+      const result = await todosStore.moveTodoToDue(
+        payload.id,
+        payload.due,
+        payload.order ?? null,
+        deps.gitSync.scheduleCommit
+      );
+      await deps.reminders.scheduleReminders();
+      deps.onTodosChanged();
+      return result;
+    }
+  );
   ipcMain.handle(IPC_CHANNELS.TODOS_REORDER, async (_evt, ids: string[]) => {
     await todosStore.reorderTodos(ids, deps.gitSync.scheduleCommit);
     deps.onTodosChanged();

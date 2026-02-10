@@ -439,7 +439,12 @@ export async function deleteTodoSeries(id: string, scheduleNext: (message: strin
   return true;
 }
 
-export async function moveTodoToDue(id: string, due: string | null, scheduleNext: (message: string) => void) {
+export async function moveTodoToDue(
+  id: string,
+  due: string | null,
+  order: number | null,
+  scheduleNext: (message: string) => void
+) {
   const todo = await readTodo(id);
   if (!todo) return null;
   return saveTodo(
@@ -455,7 +460,7 @@ export async function moveTodoToDue(id: string, due: string | null, scheduleNext
       recurrenceEnd: todo.recurrenceEnd,
       recurrenceCount: todo.recurrenceCount,
       tags: todo.tags,
-      order: todo.order,
+      order: order ?? todo.order,
     },
     scheduleNext
   );
