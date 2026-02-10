@@ -11,6 +11,7 @@
     "clean:main": "node -e \"require('fs').rmSync('dist/main',{recursive:true,force:true});require('fs').rmSync('dist/shared',{recursive:true,force:true});\"",
     "build:main": "npm run clean:main && tsc -p tsconfig.main.json && node -e \"const fs=require('fs');const src='dist/shared';const dest='dist/main/shared';if(fs.existsSync(src)){fs.rmSync(dest,{recursive:true,force:true});fs.mkdirSync(dest,{recursive:true});fs.cpSync(src,dest,{recursive:true});}\"",
     "build:renderer": "vite build",
+    "dist": "npm run build && npx electron-builder --publish=never",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
