@@ -9,7 +9,7 @@
     "start": "electron .",
     "build": "npm run build:main && npm run build:renderer",
     "clean:main": "node -e \"require('fs').rmSync('dist/main',{recursive:true,force:true});require('fs').rmSync('dist/shared',{recursive:true,force:true});\"",
-    "build:main": "npm run clean:main && tsc -p tsconfig.main.json",
+    "build:main": "npm run clean:main && tsc -p tsconfig.main.json && node -e \"const fs=require('fs');const src='dist/shared';const dest='dist/main/shared';if(fs.existsSync(src)){fs.rmSync(dest,{recursive:true,force:true});fs.mkdirSync(dest,{recursive:true});fs.cpSync(src,dest,{recursive:true});}\"",
     "build:renderer": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

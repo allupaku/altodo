@@ -1,6 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC_CHANNELS, IPC_EVENTS } from '../shared/ipc/channels';
 import type { TodoApi } from '../shared/ipc/bridge';
+
+type ChannelsModule = typeof import('../shared/ipc/channels');
+// Preload runs in a sandboxed context; prefer a local copy, fallback to dist/shared for dev.
+function loadChannels(): ChannelsModule {
+  try {
+    return require('./shared/ipc/channels') as ChannelsModule;
+  } catch {
+    return require('../shared/ipc/channels') as ChannelsModule;
+  }
+}
+const { IPC_CHANNELS, IPC_EVENTS } = loadChannels();
 
 const api: TodoApi = {
   listTodos: () => ipcRenderer.invoke(IPC_CHANNELS.TODOS_LIST),
