@@ -38,14 +38,16 @@ export default function SettingsPanel({ open, settings, displays, onClose, onUpd
   }
 
   return (
-    <aside className={`panel ${open ? '' : 'hidden'}`}> 
-      <div className="panel-header">
-        <div>Settings</div>
-        <button className="ghost" onClick={onClose} type="button">
-          Close
-        </button>
-      </div>
-      <div className="panel-body">
+    <>
+      <div className={`panel-overlay ${open ? 'open' : ''}`} onClick={onClose} />
+      <aside className={`panel-drawer ${open ? 'open' : ''}`}>
+        <div className="panel-header">
+          <div>Settings</div>
+          <button className="ghost" onClick={onClose} type="button">
+            Close
+          </button>
+        </div>
+        <div className="panel-body">
         <label className="toggle">
           <input
             type="checkbox"
@@ -122,7 +124,8 @@ export default function SettingsPanel({ open, settings, displays, onClose, onUpd
           />
           <span>Git sync</span>
         </label>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 }

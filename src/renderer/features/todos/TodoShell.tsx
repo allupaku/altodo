@@ -54,15 +54,20 @@ export default function TodoShell() {
 
   return (
     <div id="app" className={isEmpty ? 'empty' : ''}>
-      <header id="controls">
-        <div className="controls-row">
+      <header id="controls" className={settingsOpen ? 'settings-open' : ''}>
+        <div className={`controls-row ${settingsOpen ? 'settings-open' : ''}`}>
           <div className="drag-handle">
             <div className="title">Todo Bar</div>
             <div className="subtitle">Markdown-backed, always-ready.</div>
           </div>
           <div className="buttons">
-            <button id="settingsToggle" className="ghost" type="button" onClick={() => setSettingsOpen(true)}>
-              Settings
+            <button
+              id="settingsToggle"
+              className="ghost"
+              type="button"
+              onClick={() => setSettingsOpen((prev) => !prev)}
+            >
+              {settingsOpen ? 'Close' : 'Settings'}
             </button>
           </div>
         </div>
