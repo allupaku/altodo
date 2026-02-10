@@ -418,7 +418,7 @@ button:not(:disabled):hover {
   height: 18px;
   appearance: none;
   border: 2px solid currentColor;
-  border-radius: 4px;
+  border-radius: 2px;
   background: #ffffff;
   display: inline-flex;
   align-items: center;
@@ -434,11 +434,16 @@ button:not(:disabled):hover {
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: rotate(45deg);
+  opacity: 0;
 }
 
 .done-toggle input:checked {
   color: #16a34a;
   border-color: #16a34a;
+}
+
+.done-toggle input:checked::after {
+  opacity: 1;
 }
 
 .done-toggle input.overdue {
