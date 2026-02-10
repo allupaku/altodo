@@ -609,7 +609,7 @@ export function useTodoController(): UseTodoControllerResult {
 
   useEffect(() => {
     saveActiveRef.current = () => {
-      saveActive().catch(() => {});
+      saveActive({ exit: true }).catch(() => {});
     };
   }, [saveActive]);
 
