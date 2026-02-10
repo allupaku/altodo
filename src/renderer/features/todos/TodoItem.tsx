@@ -104,7 +104,7 @@ export default function TodoItem({
 
   return (
     <div
-      className={`todo-item ${rowIndex % 2 === 1 ? 'row-alt' : ''} ${isActive ? 'active' : ''}`}
+      className={`todo-item ${rowIndex % 2 === 1 ? 'row-alt' : ''} ${isActive ? 'active' : ''} status-${statusValue}`}
       onClick={() => {
         if (isDragging) return;
         onSelect();

@@ -316,6 +316,24 @@ button:not(:disabled):hover {
   transition: background 0.25s ease, border-color 0.25s ease;
 }
 
+.todo-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #cbd5e1;
+}
+
+.todo-item.status-done::before {
+  background: #16a34a;
+}
+
+.todo-item.status-deferred::before {
+  background: #fca5a5;
+}
+
 .todo-item + .todo-item {
   border-top: 1px solid var(--border);
 }
