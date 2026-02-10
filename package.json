@@ -1,0 +1,19 @@
+{
+  "name": "todo-bar",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"No tests\"",
+    "start": "electron .",
+    "dev": "electron .",
+    "lint": "echo \"No lint\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^40.2.1"
+  }
+}

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo Bar</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header id="controls">
+        <div class="controls-row">
+          <div class="drag-handle">
+            <div class="title">Todo Bar</div>
+            <div class="subtitle">Markdown-backed, always-ready.</div>
+          </div>
+          <div class="buttons">
+            <button id="settingsToggle" class="ghost">Settings</button>
+          </div>
+        </div>
+      </header>
+      <main id="content">
+        <div id="listToolbar">
+          <div class="tabs">
+            <button id="tabTodo" class="tab active">Todo</button>
+            <button id="tabDone" class="tab">Done</button>
+          </div>
+          <div class="filter">
+            <label for="tagFilter">Tag</label>
+            <select id="tagFilter"></select>
+          </div>
+          <div class="sort">
+            <label for="sortSelect">Sort</label>
+            <select id="sortSelect">
+              <option value="due">Due date</option>
+              <option value="created">Created date</option>
+              <option value="title">Title</option>
+              <option value="updated">Updated date</option>
+            </select>
+          </div>
+        </div>
+        <section id="list"></section>
+      </main>
+      <button id="add" class="fab" title="New todo">+</button>
+      <aside id="settingsPanel" class="panel hidden">
+        <div class="panel-header">
+          <div>Settings</div>
+          <button id="settingsClose" class="ghost">Close</button>
+        </div>
+        <div class="panel-body">
+          <label class="toggle">
+            <input type="checkbox" id="alwaysOnTop" />
+            <span>Always on top</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="dockRight" />
+            <span>Dock right</span>
+          </label>
+          <label class="select" id="displayRow">
+            <span>Display</span>
+            <select id="displaySelect"></select>
+          </label>
+          <div class="width-row">
+            <label class="select">
+              <span>Width</span>
+              <input id="widthValue" type="number" min="260" max="800" step="10" />
+            </label>
+            <label class="select">
+              <span>Unit</span>
+              <select id="widthMode">
+                <option value="px">px</option>
+                <option value="percent">%</option>
+              </select>
+            </label>
+          </div>
+          <label class="select">
+            <span>Todos folder</span>
+            <input id="todosDir" type="text" placeholder="/Users/you/TODOS" />
+          </label>
+          <label class="select">
+            <span>Reminder time</span>
+            <input id="reminderTime" type="time" />
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="gitEnabled" />
+            <span>Git sync</span>
+          </label>
+        </div>
+      </aside>
+      <div id="draftOverlay" class="draft-overlay hidden">
+        <div id="draftCard" class="draft-card">
+          <div class="draft-header">
+            <div id="draftTitle" class="draft-title" contenteditable="true" data-placeholder="Todo title"></div>
+            <button id="draftClose" class="ghost icon" title="Discard">×</button>
+          </div>
+          <div class="draft-meta">
+            <div class="due-row">
+              <input id="draftDue" type="date" class="due-date" />
+            </div>
+            <label class="select">
+              <span>Remind</span>
+              <select id="draftRemind">
+                <option value="none">None</option>
+                <option value="5m">5 minutes before</option>
+                <option value="30m">30 minutes before</option>
+                <option value="1h">1 hour before</option>
+                <option value="1d">1 day before</option>
+              </select>
+            </label>
+            <label class="select">
+              <span>Repeat</span>
+              <select id="draftRepeat">
+                <option value="none">No repeat</option>
+                <option value="daily">Every day</option>
+                <option value="weekdays">Every weekday</option>
+                <option value="biweekly">Every 2 weeks</option>
+                <option value="weekly:1">Every Monday</option>
+                <option value="weekly:2">Every Tuesday</option>
+                <option value="weekly:3">Every Wednesday</option>
+                <option value="weekly:4">Every Thursday</option>
+                <option value="weekly:5">Every Friday</option>
+                <option value="weekly:6">Every Saturday</option>
+                <option value="weekly:0">Every Sunday</option>
+                <option value="monthly">Every month</option>
+              </select>
+            </label>
+            <label class="select hidden" id="draftRepeatEndDateRow">
+              <span>End date</span>
+              <input id="draftRepeatEndDate" type="date" class="due-date inline" />
+            </label>
+            <label class="select hidden" id="draftRepeatEndCountRow">
+              <span>Occurrences</span>
+              <input id="draftRepeatEndCount" type="number" min="1" class="due-date inline" />
+            </label>
+            <label class="select tag-row">
+              <span>Tags</span>
+              <div class="tag-input">
+                <input id="draftTagInput" type="text" list="tagSuggestions" placeholder="Add tag" />
+                <button id="draftTagAdd" class="ghost">Add</button>
+              </div>
+            </label>
+          </div>
+          <div id="draftRepeatPreview" class="repeat-preview hidden"></div>
+          <div id="draftTags" class="tag-list"></div>
+          <div id="draftBody" class="draft-body" contenteditable="true" data-placeholder="Details..."></div>
+          <div class="draft-actions">
+            <button id="draftSave" class="primary icon" title="Save">✓</button>
+          </div>
+        </div>
+      </div>
+      <div id="recurrenceOverlay" class="draft-overlay hidden">
+        <div id="recurrenceCard" class="draft-card">
+          <div class="draft-header">
+            <div class="draft-title">Recurrence</div>
+            <button id="recurrenceClose" class="ghost icon" title="Close">×</button>
+          </div>
+          <div class="draft-meta">
+            <label class="select">
+              <span>Repeat</span>
+              <select id="recurrenceRepeat">
+                <option value="none">No repeat</option>
+                <option value="daily">Every day</option>
+                <option value="weekdays">Every weekday</option>
+                <option value="biweekly">Every 2 weeks</option>
+                <option value="weekly:1">Every Monday</option>
+                <option value="weekly:2">Every Tuesday</option>
+                <option value="weekly:3">Every Wednesday</option>
+                <option value="weekly:4">Every Thursday</option>
+                <option value="weekly:5">Every Friday</option>
+                <option value="weekly:6">Every Saturday</option>
+                <option value="weekly:0">Every Sunday</option>
+                <option value="monthly">Every month</option>
+              </select>
+            </label>
+            <label class="select hidden" id="recurrenceEndDateRow">
+              <span>End date</span>
+              <input id="recurrenceEndDate" type="date" class="due-date inline" />
+            </label>
+            <label class="select hidden" id="recurrenceEndCountRow">
+              <span>Occurrences</span>
+              <input id="recurrenceEndCount" type="number" min="1" class="due-date inline" />
+            </label>
+          </div>
+          <div id="recurrenceRepeatPreview" class="repeat-preview hidden"></div>
+          <div class="draft-actions">
+            <button id="recurrenceSave" class="primary icon" title="Save">✓</button>
+          </div>
+        </div>
+      </div>
+      <div id="tagOverlay" class="draft-overlay hidden">
+        <div id="tagCard" class="draft-card">
+          <div class="draft-header">
+            <div class="draft-title">Tags</div>
+            <button id="tagClose" class="ghost icon" title="Close">×</button>
+          </div>
+          <div class="draft-meta">
+            <label class="select tag-row">
+              <span>Tags</span>
+              <div class="tag-input">
+                <input id="tagEditInput" type="text" list="tagSuggestions" placeholder="Add tag" />
+                <button id="tagEditAdd" class="ghost">Add</button>
+              </div>
+            </label>
+          </div>
+          <div id="tagEditList" class="tag-list"></div>
+          <div class="draft-actions">
+            <button id="tagSave" class="primary icon" title="Save">✓</button>
+          </div>
+        </div>
+      </div>
+      <datalist id="tagSuggestions"></datalist>
+      <footer id="gitStatus" class="git-status hidden"></footer>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>
