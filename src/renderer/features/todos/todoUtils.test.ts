@@ -4,6 +4,7 @@ import {
   computeEndDateFromCount,
   matchesTagFilter,
   matchesTextFilter,
+  parseBatchInput,
   parseFilterTokens,
 } from './todoUtils';
 
@@ -34,5 +35,18 @@ describe('todoUtils recurrence helpers', () => {
 
   it('computes count from end date', () => {
     expect(computeCountFromEndDate('2026-02-10', 'daily', '2026-02-12')).toBe(3);
+  });
+});
+
+describe('todoUtils batch parsing', () => {
+  it('parses batch input with dates and tags', () => {
+    const items = parseBatchInput(
+      'Follow up /tags:work,team @2026-02-12\nPrep notes /tags:manager',
+      '2026-02-10'
+    );
+    expect(items).toEqual([
+      { title: 'Follow up', due: '2026-02-12', tags: ['work', 'team'] },
+      { title: 'Prep notes', due: '2026-02-10', tags: ['manager'] },
+    ]);
   });
 });

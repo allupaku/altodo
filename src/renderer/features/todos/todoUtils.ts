@@ -294,3 +294,56 @@ export function collectAllTags(todos: TodoListItem[]) {
   });
   return uniqueTokens(tags);
 }
+
+export interface BatchTodoDraft {
+  title: string;
+  due: string | null;
+  tags: string[];
+}
+
+function normalizeBatchTags(value: string) {
+  return value
+    .split(/[,\s]+/)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+function normalizeDueToken(value: string | null) {
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return value;
+}
+
+export function parseBatchInput(text: string, fallbackDue: string | null): BatchTodoDraft[] {
+  const lines = text.split(/\r?\n/);
+  const items: BatchTodoDraft[] = [];
+  lines.forEach((line) => {
+    const raw = line.trim();
+    if (!raw) return;
+    let working = raw;
+    let due: string | null = null;
+    const dateMatch = working.match(/@(\d{4}-\d{2}-\d{2})\s*$/);
+    if (dateMatch) {
+      const parsed = normalizeDueToken(dateMatch[1]);
+      if (parsed) {
+        due = parsed;
+        working = working.slice(0, dateMatch.index).trim();
+      }
+    }
+    const tags: string[] = [];
+    const tagRegex = /\/tags:([^\n]+)/gi;
+    let tagMatch: RegExpExecArray | null;
+    while ((tagMatch = tagRegex.exec(working)) !== null) {
+      tags.push(...normalizeBatchTags(tagMatch[1]));
+    }
+    working = working.replace(tagRegex, '').trim();
+    const title = working.replace(/\s+/g, ' ').trim();
+    if (!title) return;
+    items.push({
+      title,
+      due: due ?? fallbackDue,
+      tags: uniqueTokens(tags),
+    });
+  });
+  return items;
+}

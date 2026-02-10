@@ -2,7 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AppSettings, DisplayInfo, GitStatus } from '../../../shared/models/settings';
 import type { TodoDetail, TodoListItem, TodoSavePayload, TodoStatus } from '../../../shared/models/todo';
 import type { EditCache, SortKey, TabKey } from './types';
-import { collectAllTags, computeCountFromEndDate, computeEndDateFromCount, parseRecurrenceCount } from './todoUtils';
+import {
+  collectAllTags,
+  computeCountFromEndDate,
+  computeEndDateFromCount,
+  parseBatchInput,
+  parseRecurrenceCount,
+} from './todoUtils';
 import { formatDateKey } from '../../../shared/utils/date';
 
 interface RecurrenceDraft {
@@ -33,6 +39,8 @@ interface UseTodoControllerResult {
   draftOpen: boolean;
   recurrenceDraft: RecurrenceDraft | null;
   tagDraft: TagDraft | null;
+  batchDraft: boolean;
+  batchValue: string;
   allTags: string[];
   actions: {
     setCurrentTab: (tab: TabKey) => void;
@@ -58,6 +66,10 @@ interface UseTodoControllerResult {
     closeTagModal: () => void;
     updateTagDraft: (tags: string[]) => void;
     saveTagDraft: () => Promise<void>;
+    openBatch: () => void;
+    closeBatch: () => void;
+    updateBatchValue: (value: string) => void;
+    saveBatch: () => Promise<void>;
     setSettings: (next: Partial<AppSettings>) => Promise<void>;
     refreshGitStatus: () => Promise<void>;
     reloadTodos: () => Promise<void>;
@@ -132,6 +144,8 @@ export function useTodoController(): UseTodoControllerResult {
   const [draftOpen, setDraftOpen] = useState(false);
   const [recurrenceDraft, setRecurrenceDraft] = useState<RecurrenceDraft | null>(null);
   const [tagDraft, setTagDraft] = useState<TagDraft | null>(null);
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [batchValue, setBatchValue] = useState('');
   const isSavingRef = useRef(false);
   const pendingExternalReload = useRef(false);
   const suspendAutoSave = useRef(false);
@@ -139,6 +153,7 @@ export function useTodoController(): UseTodoControllerResult {
   const draftOpenRef = useRef(false);
   const recurrenceDraftRef = useRef<RecurrenceDraft | null>(null);
   const tagDraftRef = useRef<TagDraft | null>(null);
+  const batchOpenRef = useRef(false);
   const triggerNewTodoRef = useRef<() => void>(() => {});
   const saveActiveRef = useRef<() => void>(() => {});
 
@@ -446,6 +461,50 @@ export function useTodoController(): UseTodoControllerResult {
     setTagDraft({ ...tagDraft, tags });
   }
 
+  function openBatch() {
+    setBatchOpen(true);
+  }
+
+  function closeBatch() {
+    setBatchOpen(false);
+    setBatchValue('');
+  }
+
+  function updateBatchValue(value: string) {
+    setBatchValue(value);
+  }
+
+  async function saveBatch() {
+    if (!batchValue.trim()) {
+      closeBatch();
+      return;
+    }
+    const fallbackDue = formatDateKey(new Date());
+    const items = parseBatchInput(batchValue, fallbackDue);
+    if (!items.length) {
+      closeBatch();
+      return;
+    }
+    for (const item of items) {
+      await api.saveTodo({
+        id: null,
+        title: item.title,
+        body: '',
+        due: item.due,
+        status: 'todo',
+        remind: 'none',
+        priority: 'normal',
+        recurrence: 'none',
+        recurrenceEnd: null,
+        recurrenceCount: null,
+        tags: item.tags,
+        order: null,
+      });
+    }
+    await reloadTodos();
+    closeBatch();
+  }
+
   async function saveTagDraft() {
     if (!tagDraft) return;
     const detail = await api.readTodo(tagDraft.todoId || '');
@@ -539,6 +598,10 @@ export function useTodoController(): UseTodoControllerResult {
   }, [tagDraft]);
 
   useEffect(() => {
+    batchOpenRef.current = batchOpen;
+  }, [batchOpen]);
+
+  useEffect(() => {
     triggerNewTodoRef.current = () => {
       triggerNewTodo();
     };
@@ -561,6 +624,7 @@ export function useTodoController(): UseTodoControllerResult {
         draftOpenRef.current ||
         recurrenceDraftRef.current ||
         tagDraftRef.current ||
+        batchOpenRef.current ||
         selectedIdRef.current ||
         isSavingRef.current
       ) {
@@ -585,7 +649,7 @@ export function useTodoController(): UseTodoControllerResult {
 
   useEffect(() => {
     function handlePointerDown(event: PointerEvent) {
-      if (recurrenceDraftRef.current || tagDraftRef.current) return;
+      if (recurrenceDraftRef.current || tagDraftRef.current || batchOpenRef.current) return;
       if (draftOpenRef.current) return;
       if (!selectedIdRef.current) return;
       if (suspendAutoSave.current) return;
@@ -618,6 +682,8 @@ export function useTodoController(): UseTodoControllerResult {
     draftOpen,
     recurrenceDraft,
     tagDraft,
+    batchDraft: batchOpen,
+    batchValue,
     allTags,
     actions: {
       setCurrentTab: changeTab,
@@ -643,6 +709,10 @@ export function useTodoController(): UseTodoControllerResult {
       closeTagModal,
       updateTagDraft,
       saveTagDraft,
+      openBatch,
+      closeBatch,
+      updateBatchValue,
+      saveBatch,
       setSettings,
       refreshGitStatus,
       reloadTodos,

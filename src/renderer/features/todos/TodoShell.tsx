@@ -4,6 +4,7 @@ import TodoList from './TodoList';
 import DraftModal from './DraftModal';
 import RecurrenceModal from './RecurrenceModal';
 import TagModal from './TagModal';
+import BatchAddModal from './BatchAddModal';
 import SettingsPanel from '../settings/SettingsPanel';
 import { isDoneInDoneTab } from './todoUtils';
 
@@ -25,6 +26,8 @@ export default function TodoShell() {
     draftOpen,
     recurrenceDraft,
     tagDraft,
+    batchDraft,
+    batchValue,
     allTags,
     actions,
   } = useTodoController();
@@ -61,6 +64,9 @@ export default function TodoShell() {
             <div className="subtitle">Markdown-backed, always-ready.</div>
           </div>
           <div className="buttons">
+            <button className="ghost" type="button" onClick={() => actions.openBatch()}>
+              Batch add
+            </button>
             <button
               id="settingsToggle"
               className="ghost"
@@ -185,6 +191,13 @@ export default function TodoShell() {
         onClose={actions.closeTagModal}
         onChange={(nextTags) => actions.updateTagDraft(nextTags)}
         onConfirm={actions.saveTagDraft}
+      />
+      <BatchAddModal
+        open={batchDraft}
+        value={batchValue}
+        onChange={actions.updateBatchValue}
+        onClose={actions.closeBatch}
+        onSave={actions.saveBatch}
       />
       <datalist id="filterSuggestions">
         {filterSuggestions.map((item) => (
