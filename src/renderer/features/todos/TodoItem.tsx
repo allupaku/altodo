@@ -197,18 +197,6 @@ export default function TodoItem({
                 }}
               />
             </span>
-            {!isDraft && (
-              <button
-                className="icon plain tag-inline"
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpenTags();
-                }}
-              >
-                🏷
-              </button>
-            )}
             <span className={`todo-remind ${reminderValue && reminderValue !== 'none' ? '' : 'hidden'}`}>
               {isActive ? (
                 <select
@@ -227,11 +215,21 @@ export default function TodoItem({
               )}
             </span>
           </div>
-          {tags.length > 0 && (
-            <div className="todo-tags">
-              <TagChips tags={tags} />
-            </div>
-          )}
+          <div className="todo-tags">
+            {!isDraft && (
+              <button
+                className="icon plain tag-inline"
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenTags();
+                }}
+              >
+                🏷
+              </button>
+            )}
+            {tags.length > 0 && <TagChips tags={tags} />}
+          </div>
         </div>
       </div>
       <div className="todo-header-actions">

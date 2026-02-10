@@ -495,9 +495,10 @@ button:not(:disabled):hover {
 }
 
 .recurrence-inline {
-  width: 46px;
-  height: 46px;
-  font-size: 22px;
+  width: 52px;
+  height: 52px;
+  font-size: 26px;
+  line-height: 1;
 }
 
 .tag-inline {
@@ -590,6 +591,9 @@ button:not(:disabled):hover {
 
 .todo-tags {
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .tag-chip {
