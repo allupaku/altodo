@@ -134,6 +134,23 @@ This creates:
 
 For packaging releases, use the GitHub Actions workflow or `electron-builder`.
 
+## Releases (GitHub)
+
+Releases are published by GitHub Actions when a tag like `v1.2.3` is pushed.
+
+Steps:
+
+1. Update `package.json` version.
+2. Commit the version bump.
+3. Create and push a tag:
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+The workflow in `.github/workflows/release.yml` will build for macOS, Windows, and Linux and publish artifacts to a GitHub Release using the repository `GITHUB_TOKEN`.
+
 ## Development Checklist
 
 - Update `src/shared` contracts before touching IPC
