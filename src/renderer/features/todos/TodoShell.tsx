@@ -121,7 +121,7 @@ export default function TodoShell() {
             onActivateField={actions.activateField}
             onUpdateCache={actions.updateActiveCache}
             onToggleDone={actions.toggleDone}
-            onSave={() => actions.saveActive()}
+            onSave={(options) => actions.saveActive(options)}
             onRequestDelete={(todo) => actions.setPendingDeleteId(todo.id)}
             onConfirmDelete={actions.deleteTodo}
             onConfirmDeleteSeries={actions.deleteTodoSeries}

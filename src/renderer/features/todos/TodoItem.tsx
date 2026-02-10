@@ -21,7 +21,7 @@ interface TodoItemProps {
   onActivateField: (field: EditCache['activeField']) => void;
   onUpdateCache: (patch: Partial<EditCache>) => void;
   onToggleDone: (done: boolean) => void;
-  onSave: () => void;
+  onSave: (options?: { exit?: boolean }) => void;
   onRequestDelete: () => void;
   onConfirmDelete: () => void;
   onConfirmDeleteSeries: () => void;
@@ -250,7 +250,7 @@ export default function TodoItem({
           type="button"
           onClick={(event) => {
             event.stopPropagation();
-            onSave();
+            onSave({ exit: true });
           }}
           style={{ visibility: isActive ? 'visible' : 'hidden' }}
         >

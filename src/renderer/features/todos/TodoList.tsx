@@ -84,7 +84,7 @@ interface TodoListProps {
   onActivateField: (field: EditCache['activeField']) => void;
   onUpdateCache: (patch: Partial<EditCache>) => void;
   onToggleDone: (todo: TodoListItem, done: boolean) => void;
-  onSave: () => void;
+  onSave: (options?: { exit?: boolean }) => void;
   onRequestDelete: (todo: TodoListItem) => void;
   onConfirmDelete: (todo: TodoListItem) => void;
   onConfirmDeleteSeries: (todo: TodoListItem) => void;
@@ -294,7 +294,7 @@ export default function TodoList({
                           onActivateField={onActivateField}
                           onUpdateCache={onUpdateCache}
                           onToggleDone={(done) => onToggleDone(todo, done)}
-                          onSave={onSave}
+                        onSave={onSave}
                           onRequestDelete={() => onRequestDelete(todo)}
                           onConfirmDelete={() => onConfirmDelete(todo)}
                           onConfirmDeleteSeries={() => onConfirmDeleteSeries(todo)}
