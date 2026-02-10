@@ -1,0 +1,17 @@
+appId: com.todo-bar.app
+productName: Todo Bar
+files:
+  - dist/**
+  - package.json
+  - README.md
+extraMetadata:
+  main: dist/main/main.js
+mac:
+  target:
+    - dmg
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage

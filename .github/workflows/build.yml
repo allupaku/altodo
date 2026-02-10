@@ -32,6 +32,9 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Build App Bundles
+        run: npm run build
+
       - name: Build
         run: npx electron-builder --${{ matrix.target }} --publish=never
 
