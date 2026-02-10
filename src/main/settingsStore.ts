@@ -1,7 +1,7 @@
 import { app } from 'electron';
-import fs from 'fs/promises';
-import os from 'os';
-import path from 'path';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
 import type { AppSettings } from '../shared/models/settings';
 
 export const DEFAULT_SETTINGS: AppSettings = {

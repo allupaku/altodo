@@ -1,5 +1,5 @@
 import { app, BrowserWindow, globalShortcut, screen } from 'electron';
-import path from 'path';
+import * as path from 'path';
 import { loadSettings, getSettings, getTodosDir } from './settingsStore';
 import { createWindowManager } from './windowManager';
 import { createGitSync } from './gitSync';

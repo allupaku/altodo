@@ -20,6 +20,6 @@ export interface TodoApi {
   onGitStatus: (cb: (status: GitStatus) => void) => void;
 }
 
-export interface WindowWithApi extends Window {
+export interface WindowWithApi {
   todoApi: TodoApi;
 }

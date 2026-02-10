@@ -1,5 +1,5 @@
-import fsSync from 'fs';
-import crypto from 'crypto';
+import * as fsSync from 'fs';
+import * as crypto from 'crypto';
 import { ensureTodosDir, getTodosDir } from './settingsStore';
 
 export function createTodosWatcher(onChanged: () => void) {

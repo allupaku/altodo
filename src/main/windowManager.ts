@@ -1,5 +1,5 @@
 import { BrowserWindow, screen } from 'electron';
-import path from 'path';
+import * as path from 'path';
 import type { AppSettings, DisplayInfo } from '../shared/models/settings';
 
 interface WindowManagerOptions {
@@ -73,11 +73,11 @@ export function createWindowManager(options: WindowManagerOptions) {
     });
 
     if (options.isDev) {
-      mainWindow.loadURL(options.devServerUrl).catch(() => {});
-      mainWindow.webContents.openDevTools({ mode: 'detach' }).catch(() => {});
+      void mainWindow.loadURL(options.devServerUrl);
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
     } else {
       const indexPath = path.join(__dirname, '../renderer/index.html');
-      mainWindow.loadFile(indexPath).catch(() => {});
+      void mainWindow.loadFile(indexPath);
     }
 
     mainWindow.once('ready-to-show', () => {
