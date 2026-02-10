@@ -881,30 +881,38 @@ button.icon {
   gap: 12px;
 }
 
-.draft-title {
+.draft-title-input {
   flex: 1;
   font-weight: 600;
+  border: none;
   border-bottom: 1px solid var(--border);
   padding: 4px 0;
   min-height: 24px;
-  cursor: text;
-  direction: ltr;
-  text-align: left;
+  background: transparent;
+  color: var(--text);
 }
 
-.draft-title:focus,
-.draft-body:focus {
+.draft-title-input:focus {
   outline: none;
   border-bottom-color: var(--accent);
 }
 
-.draft-body {
+.draft-body-input {
   min-height: 120px;
+  border: none;
   border-bottom: 1px solid var(--border);
   padding: 6px 0;
-  white-space: pre-wrap;
-  direction: ltr;
-  text-align: left;
+  background: transparent;
+  color: var(--text);
+  resize: vertical;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.draft-body-input:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
 }
 
 .draft-meta {

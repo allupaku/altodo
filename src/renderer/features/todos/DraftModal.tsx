@@ -55,20 +55,14 @@ export default function DraftModal({ open, cache, tags, onClose, onSave, onChang
     <div className="draft-overlay" onClick={onSave}>
       <div className="draft-card" onClick={(event) => event.stopPropagation()}>
         <div className="draft-header">
-          <div
-            className="draft-title"
-            contentEditable
-            data-placeholder="Todo title"
+          <input
+            className="draft-title-input"
+            type="text"
+            placeholder="Todo title"
             dir="ltr"
-            style={{ unicodeBidi: 'plaintext' }}
-            suppressContentEditableWarning
-            onInput={(event) => {
-              const next = (event.target as HTMLElement).innerText;
-              onChange({ title: next });
-            }}
-          >
-            {cache.title}
-          </div>
+            value={cache.title}
+            onChange={(event) => onChange({ title: event.target.value })}
+          />
           <button className="ghost icon" onClick={onClose} type="button">
             ×
           </button>
@@ -214,20 +208,13 @@ export default function DraftModal({ open, cache, tags, onClose, onSave, onChang
           removable
           onRemove={(tag) => onUpdateTags(cache.tags.filter((item) => item !== tag))}
         />
-        <div
-          className="draft-body"
-          contentEditable
-          data-placeholder="Details..."
+        <textarea
+          className="draft-body-input"
+          placeholder="Details..."
           dir="ltr"
-          style={{ unicodeBidi: 'plaintext' }}
-          suppressContentEditableWarning
-          onInput={(event) => {
-            const next = (event.target as HTMLElement).innerText;
-            onChange({ body: next });
-          }}
-        >
-          {cache.body}
-        </div>
+          value={cache.body}
+          onChange={(event) => onChange({ body: event.target.value })}
+        />
         <div className="draft-actions">
           <button className="primary icon" type="button" onClick={onSave}>
             ✓
