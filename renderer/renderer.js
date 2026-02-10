@@ -863,13 +863,16 @@ function renderTodoItem(todo, rowIndex = 0) {
     const header = document.createElement('div');
     header.className = 'todo-header';
 
+    const leftColumn = document.createElement('div');
+    leftColumn.className = 'todo-left';
+    let doneInput = null;
     if (!todo.isDraft) {
       const doneToggle = document.createElement('label');
       doneToggle.className = 'done-toggle';
       doneToggle.addEventListener('click', (event) => {
         event.stopPropagation();
       });
-      const doneInput = document.createElement('input');
+      doneInput = document.createElement('input');
       doneInput.type = 'checkbox';
       doneInput.addEventListener('pointerdown', (event) => {
         event.stopPropagation();
@@ -959,8 +962,22 @@ function renderTodoItem(todo, rowIndex = 0) {
         updateDoneTooltip();
       });
       doneToggle.appendChild(doneInput);
-      header.appendChild(doneToggle);
+      leftColumn.appendChild(doneToggle);
     }
+
+    const recurrenceBtn = document.createElement('button');
+    recurrenceBtn.className = 'icon plain recurrence-inline';
+    recurrenceBtn.textContent = '⟳';
+    recurrenceBtn.title = 'Edit recurrence';
+    recurrenceBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      showRecurrenceModal(id, todo);
+    });
+    if (!todo.isDraft) {
+      leftColumn.appendChild(recurrenceBtn);
+    }
+
+    header.appendChild(leftColumn);
 
     const headerLeft = document.createElement('div');
     headerLeft.className = 'todo-header-left';
@@ -994,6 +1011,18 @@ function renderTodoItem(todo, rowIndex = 0) {
     metaRow.appendChild(prioritySpan);
     metaRow.appendChild(recurrenceSpan);
     metaRow.appendChild(dueSlot);
+
+    const tagBtn = document.createElement('button');
+    tagBtn.className = 'icon plain tag-inline';
+    tagBtn.textContent = '🏷';
+    tagBtn.title = 'Edit tags';
+    tagBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      showTagModal(id, todo);
+    });
+    if (!todo.isDraft) {
+      metaRow.appendChild(tagBtn);
+    }
     metaRow.appendChild(remindSlot);
     meta.appendChild(metaRow);
     const tagsRow = document.createElement('div');
@@ -1113,14 +1142,16 @@ function renderTodoItem(todo, rowIndex = 0) {
       const dueValueText = dueValue ? dueValue : '';
       dueInput.value = dueValueText;
       const todayKey = formatDateKey(new Date());
-      const isOverdue = Boolean(
-        dueValue && dueValue < todayKey && statusValue !== 'done'
-      );
+      const isOverdue = Boolean(dueValue && dueValue < todayKey && statusValue !== 'done');
+      const isDeferred = statusValue === 'deferred';
       dueSlot.classList.toggle('overdue', isOverdue);
       dueInput.classList.toggle('overdue', isOverdue);
       dueInput.classList.toggle('editable', editable);
       dueInput.classList.toggle('readonly', !editable);
       dueInput.tabIndex = editable ? 0 : -1;
+      if (doneInput) {
+        doneInput.classList.toggle('overdue', !doneInput.checked && (isOverdue || isDeferred));
+      }
       const tags = getTagsForTodo(todo);
       renderTagChips(tagsRow, tags, null);
       tagsRow.classList.toggle('hidden', !tags.length);
@@ -1189,24 +1220,6 @@ function renderTodoItem(todo, rowIndex = 0) {
     const headerActions = document.createElement('div');
     headerActions.className = 'todo-header-actions';
 
-    const recurrenceBtn = document.createElement('button');
-    recurrenceBtn.className = 'icon plain';
-    recurrenceBtn.textContent = '⟳';
-    recurrenceBtn.title = 'Edit recurrence';
-    recurrenceBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      showRecurrenceModal(id, todo);
-    });
-
-    const tagBtn = document.createElement('button');
-    tagBtn.className = 'icon plain';
-    tagBtn.textContent = '🏷';
-    tagBtn.title = 'Edit tags';
-    tagBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      showTagModal(id, todo);
-    });
-
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'icon plain danger-text';
     deleteBtn.textContent = '🗑';
@@ -1230,10 +1243,6 @@ function renderTodoItem(todo, rowIndex = 0) {
       renderList();
     });
 
-    headerActions.appendChild(recurrenceBtn);
-    if (!todo.isDraft) {
-      headerActions.appendChild(tagBtn);
-    }
     headerActions.appendChild(deleteBtn);
     headerActions.appendChild(saveBtn);
 
