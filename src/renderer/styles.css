@@ -880,6 +880,8 @@ button.icon {
   padding: 4px 0;
   min-height: 24px;
   cursor: text;
+  direction: ltr;
+  text-align: left;
 }
 
 .draft-title:focus,
@@ -893,6 +895,8 @@ button.icon {
   border-bottom: 1px solid var(--border);
   padding: 6px 0;
   white-space: pre-wrap;
+  direction: ltr;
+  text-align: left;
 }
 
 .draft-meta {

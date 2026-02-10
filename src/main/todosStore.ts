@@ -38,9 +38,25 @@ interface StoredTodo {
 }
 
 const META_REGEX = /<!--\s*todo:\s*({[\s\S]*?})\s*-->\s*([\s\S]*?)\s*<!--\s*\/todo\s*-->/g;
+const DATE_DIR_NAME = 'by-date';
+const TAG_DIR_NAME = 'by-tag';
 
 function bucketForDue(due: string | null) {
   return due ? `${due}.md` : 'undated.md';
+}
+
+function getDateDir() {
+  return path.join(getTodosDir(), DATE_DIR_NAME);
+}
+
+function getTagDir() {
+  return path.join(getTodosDir(), TAG_DIR_NAME);
+}
+
+function normalizeTagSlug(tag: string) {
+  const cleaned = tag.trim().toLowerCase();
+  if (!cleaned) return '';
+  return cleaned.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
 function stripDateSuffix(title: string) {
@@ -184,7 +200,7 @@ function serializeBucket(dateKey: string, todos: StoredTodo[]) {
 }
 
 async function readBucket(name: string) {
-  const fullPath = path.join(getTodosDir(), name);
+  const fullPath = path.join(getDateDir(), name);
   try {
     const stat = await fs.stat(fullPath);
     const content = await fs.readFile(fullPath, 'utf8');
@@ -194,8 +210,8 @@ async function readBucket(name: string) {
   }
 }
 
-async function writeBucket(name: string, todos: StoredTodo[]) {
-  const fullPath = path.join(getTodosDir(), name);
+async function writeBucket(dir: string, name: string, todos: StoredTodo[]) {
+  const fullPath = path.join(dir, name);
   if (!todos.length) {
     try {
       await fs.unlink(fullPath);
@@ -209,13 +225,60 @@ async function writeBucket(name: string, todos: StoredTodo[]) {
   await fs.writeFile(fullPath, content, 'utf8');
 }
 
-async function loadAllTodos() {
+async function migrateLegacyBuckets(dateDir: string) {
+  const baseDir = getTodosDir();
+  let baseEntries: string[] = [];
+  try {
+    baseEntries = await fs.readdir(baseDir);
+  } catch {
+    return;
+  }
+  const legacyFiles = baseEntries.filter((name) => name.toLowerCase().endsWith('.md'));
+  if (!legacyFiles.length) return;
+  let dateEntries: string[] = [];
+  try {
+    dateEntries = await fs.readdir(dateDir);
+  } catch {
+    // ignore
+  }
+  const hasDateBuckets = dateEntries.some((name) => name.toLowerCase().endsWith('.md'));
+  if (hasDateBuckets) return;
+  await fs.mkdir(dateDir, { recursive: true });
+  await Promise.all(
+    legacyFiles.map(async (name) => {
+      const from = path.join(baseDir, name);
+      const to = path.join(dateDir, name);
+      try {
+        await fs.rename(from, to);
+      } catch {
+        // ignore
+      }
+    })
+  );
+}
+
+async function ensureStorageDirs() {
   await ensureTodosDir();
-  const entries = await fs.readdir(getTodosDir());
+  const dateDir = getDateDir();
+  const tagDir = getTagDir();
+  await fs.mkdir(dateDir, { recursive: true });
+  await fs.mkdir(tagDir, { recursive: true });
+  await migrateLegacyBuckets(dateDir);
+}
+
+async function loadAllTodos() {
+  await ensureStorageDirs();
+  const dateDir = getDateDir();
+  let entries: string[] = [];
+  try {
+    entries = await fs.readdir(dateDir);
+  } catch {
+    return [];
+  }
   const mdFiles = entries.filter((name) => name.toLowerCase().endsWith('.md'));
   const items: StoredTodo[] = [];
   for (const name of mdFiles) {
-    const fullPath = path.join(getTodosDir(), name);
+    const fullPath = path.join(dateDir, name);
     let stat: { mtimeMs: number } | undefined;
     try {
       stat = await fs.stat(fullPath);
@@ -238,6 +301,47 @@ function compareDue(a: StoredTodo, b: StoredTodo) {
   if (a.due && !b.due) return -1;
   if (!a.due && b.due) return 1;
   return 0;
+}
+
+async function writeTagBuckets(todos: StoredTodo[]) {
+  const tagBase = getTagDir();
+  await fs.rm(tagBase, { recursive: true, force: true });
+  await fs.mkdir(tagBase, { recursive: true });
+  const tagMap = new Map<string, Map<string, StoredTodo[]>>();
+  todos.forEach((todo) => {
+    const tags = normalizeTags(todo.tags || []);
+    tags.forEach((tag) => {
+      const slug = normalizeTagSlug(tag);
+      if (!slug) return;
+      const bucket = bucketForDue(todo.due);
+      if (!tagMap.has(slug)) tagMap.set(slug, new Map());
+      const bucketMap = tagMap.get(slug)!;
+      if (!bucketMap.has(bucket)) bucketMap.set(bucket, []);
+      bucketMap.get(bucket)!.push({ ...todo });
+    });
+  });
+  for (const [slug, buckets] of tagMap.entries()) {
+    const tagDir = path.join(tagBase, slug);
+    await fs.mkdir(tagDir, { recursive: true });
+    for (const [bucket, list] of buckets.entries()) {
+      list.sort((a, b) => {
+        const dueCmp = compareDue(a, b);
+        if (dueCmp !== 0) return dueCmp;
+        const orderA = normalizeOrder(a.order) ?? Number.POSITIVE_INFINITY;
+        const orderB = normalizeOrder(b.order) ?? Number.POSITIVE_INFINITY;
+        if (orderA !== orderB) return orderA - orderB;
+        const aUpdated = a.updated ? Date.parse(a.updated) : 0;
+        const bUpdated = b.updated ? Date.parse(b.updated) : 0;
+        return bUpdated - aUpdated;
+      });
+      await writeBucket(tagDir, bucket, list);
+    }
+  }
+}
+
+async function refreshTagBuckets() {
+  const items = await loadAllTodos();
+  await writeTagBuckets(items);
 }
 
 export async function listTodos(): Promise<TodoListItem[]> {
@@ -284,8 +388,12 @@ export async function readTodo(id: string): Promise<TodoDetail | null> {
   };
 }
 
-export async function saveTodo(payload: TodoSavePayload, scheduleNext: (message: string) => void) {
-  await ensureTodosDir();
+export async function saveTodo(
+  payload: TodoSavePayload,
+  scheduleNext: (message: string) => void,
+  options: { skipTagRefresh?: boolean } = {}
+) {
+  await ensureStorageDirs();
   const now = new Date().toISOString();
   const items = await loadAllTodos();
   const existing = payload.id ? items.find((todo) => todo.id === payload.id) : null;
@@ -318,7 +426,7 @@ export async function saveTodo(payload: TodoSavePayload, scheduleNext: (message:
   if (oldBucket && oldBucket !== targetBucket) {
     const oldItems = await readBucket(oldBucket);
     const remaining = oldItems.filter((todo) => todo.id !== nextId);
-    await writeBucket(oldBucket, remaining);
+    await writeBucket(getDateDir(), oldBucket, remaining);
   }
 
   const bucketItems = await readBucket(targetBucket);
@@ -351,7 +459,7 @@ export async function saveTodo(payload: TodoSavePayload, scheduleNext: (message:
     const bUpdated = b.updated ? Date.parse(b.updated) : 0;
     return bUpdated - aUpdated;
   });
-  await writeBucket(targetBucket, filtered);
+  await writeBucket(getDateDir(), targetBucket, filtered);
 
   scheduleNext(`Update todo: ${stripDateSuffix(storedTitle) || 'Untitled'}`);
 
@@ -379,28 +487,34 @@ export async function saveTodo(payload: TodoSavePayload, scheduleNext: (message:
           tags: cleanTags,
           order: cleanOrder,
         },
-        scheduleNext
+        scheduleNext,
+        { skipTagRefresh: true }
       );
     }
+  }
+
+  if (!options.skipTagRefresh) {
+    await refreshTagBuckets();
   }
 
   return { id: nextId };
 }
 
 export async function deleteTodo(id: string, scheduleNext: (message: string) => void) {
-  await ensureTodosDir();
+  await ensureStorageDirs();
   const items = await loadAllTodos();
   const existing = items.find((todo) => todo.id === id);
   if (!existing) return false;
   const bucketItems = await readBucket(existing.bucket);
   const remaining = bucketItems.filter((todo) => todo.id !== id);
-  await writeBucket(existing.bucket, remaining);
+  await writeBucket(getDateDir(), existing.bucket, remaining);
+  await refreshTagBuckets();
   scheduleNext(`Delete todo: ${stripDateSuffix(existing.title) || 'Untitled'}`);
   return true;
 }
 
 export async function deleteTodoSeries(id: string, scheduleNext: (message: string) => void) {
-  await ensureTodosDir();
+  await ensureStorageDirs();
   const items = await loadAllTodos();
   const existing = items.find((todo) => todo.id === id);
   if (!existing) return false;
@@ -433,8 +547,9 @@ export async function deleteTodoSeries(id: string, scheduleNext: (message: strin
   const bucketNames = new Set(items.map((todo) => todo.bucket));
   for (const name of bucketNames) {
     const bucketItems = buckets.get(name) || [];
-    await writeBucket(name, bucketItems);
+    await writeBucket(getDateDir(), name, bucketItems);
   }
+  await refreshTagBuckets();
   scheduleNext(`Delete series: ${stripDateSuffix(existing.title) || 'Untitled'}`);
   return true;
 }
@@ -482,7 +597,8 @@ export async function reorderTodos(ids: string[], scheduleNext: (message: string
     buckets.get(replacement.bucket)!.push(replacement);
   });
   for (const [bucket, list] of buckets.entries()) {
-    await writeBucket(bucket, list);
+    await writeBucket(getDateDir(), bucket, list);
   }
+  await refreshTagBuckets();
   scheduleNext('Reorder todos');
 }

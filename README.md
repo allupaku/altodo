@@ -22,7 +22,16 @@ A lightweight, markdown-backed todo app with optional Git sync.
 
 ## Data Format
 
-Todos are stored as Markdown files named by due date (e.g., `2026-02-10.md`) plus `undated.md` for items without a due date. Each todo is wrapped in a metadata block that the app reads and writes.
+Todos are stored in a two-folder layout under your `TODOS` directory:
+
+- `by-date/` (source of truth)
+  - `YYYY-MM-DD.md`
+  - `undated.md`
+- `by-tag/` (generated copies per tag + date)
+  - `<tag>/<YYYY-MM-DD>.md`
+  - `<tag>/undated.md`
+
+Each todo is wrapped in a metadata block that the app reads and writes.
 
 ## Running Locally
 

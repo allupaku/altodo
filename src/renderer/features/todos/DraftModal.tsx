@@ -59,9 +59,10 @@ export default function DraftModal({ open, cache, tags, onClose, onSave, onChang
             className="draft-title"
             contentEditable
             data-placeholder="Todo title"
+            dir="ltr"
             suppressContentEditableWarning
             onInput={(event) => {
-              const next = (event.target as HTMLElement).innerText.trimStart();
+              const next = (event.target as HTMLElement).innerText;
               onChange({ title: next });
             }}
           >
@@ -216,6 +217,7 @@ export default function DraftModal({ open, cache, tags, onClose, onSave, onChang
           className="draft-body"
           contentEditable
           data-placeholder="Details..."
+          dir="ltr"
           suppressContentEditableWarning
           onInput={(event) => {
             const next = (event.target as HTMLElement).innerText;
