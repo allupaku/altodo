@@ -1,5 +1,6 @@
 appId: com.todo-bar.app
 productName: Todo Bar
+icon: build/icon.png
 files:
   - dist/**
   - package.json
