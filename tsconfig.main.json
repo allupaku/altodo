@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist/main",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2020"],
+    "types": ["node", "electron"],
+    "rootDir": "src",
+    "noEmit": false
+  },
+  "include": ["src/main", "src/shared"]
+}
