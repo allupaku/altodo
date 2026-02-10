@@ -366,6 +366,8 @@ button:not(:disabled):hover {
   width: 100%;
   border-bottom: 1px solid transparent;
   padding: 4px 0;
+  direction: ltr;
+  text-align: left;
 }
 
 .todo-header {
@@ -644,6 +646,8 @@ button:not(:disabled):hover {
   margin-top: 0;
   opacity: 0;
   pointer-events: none;
+  direction: ltr;
+  text-align: left;
 }
 
 .todo-body[contenteditable="true"] {
@@ -779,7 +783,7 @@ button.icon {
 .fab {
   position: fixed;
   right: 24px;
-  bottom: 24px;
+  bottom: 96px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -787,6 +791,7 @@ button.icon {
   line-height: 0;
   background: var(--accent);
   color: #ffffff;
+  z-index: 20;
 }
 
 #app.empty .fab {
