@@ -39,6 +39,7 @@ export interface TodoSavePayload {
   remind: string;
   priority: TodoPriority;
   recurrence: RecurrenceRule;
+  recurrenceId?: string | null;
   recurrenceEnd: string | null;
   recurrenceCount: number | null;
   tags: string[];
