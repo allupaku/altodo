@@ -40,10 +40,14 @@ export default function TodoShell() {
   const todoCount =
     todos.filter((todo) => !isDoneInDoneTab(todo, today)).length + (draftCache ? 1 : 0);
 
-  const gitStatusLine = gitStatus?.available
-    ? gitStatus.message
-      ? `Last commit: ${gitStatus.message}`
-      : 'Git sync enabled'
+  const gitStatusLine = gitStatus
+    ? gitStatus.enabled
+      ? gitStatus.available
+        ? gitStatus.message
+          ? `Last commit: ${gitStatus.message}`
+          : 'Git sync enabled'
+        : 'Git sync enabled (no git repo found)'
+      : 'Git sync disabled'
     : '';
   const isEmpty = todos.length === 0 && !draftCache;
   const dndEnabled = sortKey === 'due' && currentTab === 'todo';
