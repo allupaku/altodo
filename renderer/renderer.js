@@ -5,7 +5,7 @@ const listEl = document.getElementById('list');
 const tabTodo = document.getElementById('tabTodo');
 const tabDone = document.getElementById('tabDone');
 const sortSelect = document.getElementById('sortSelect');
-const tagFilterSelect = document.getElementById('tagFilter');
+const filterInput = document.getElementById('filterInput');
 const addBtn = document.getElementById('add');
 const draftOverlay = document.getElementById('draftOverlay');
 const draftCard = document.getElementById('draftCard');
@@ -42,6 +42,7 @@ const tagEditList = document.getElementById('tagEditList');
 const tagSave = document.getElementById('tagSave');
 const tagClose = document.getElementById('tagClose');
 const tagSuggestions = document.getElementById('tagSuggestions');
+const filterSuggestions = document.getElementById('filterSuggestions');
 const settingsToggle = document.getElementById('settingsToggle');
 const settingsClose = document.getElementById('settingsClose');
 const settingsPanel = document.getElementById('settingsPanel');
@@ -74,7 +75,7 @@ let tagModalOpen = false;
 let pendingExternalReload = false;
 let pendingDeleteId = null;
 let pendingFocus = null;
-let currentTagFilter = 'all';
+let currentFilterText = '';
 
 function formatDate(ms) {
   if (!ms) return '';
@@ -282,26 +283,21 @@ function updateTagSuggestions() {
   });
 }
 
-function updateTagFilterOptions() {
-  if (!tagFilterSelect) return;
+function updateFilterSuggestions() {
+  if (!filterSuggestions) return;
   const tags = collectAllTags();
-  tagFilterSelect.innerHTML = '';
-  const allOption = document.createElement('option');
-  allOption.value = 'all';
-  allOption.textContent = 'All tags';
-  tagFilterSelect.appendChild(allOption);
+  const statusTokens = ['todo', 'done', 'deferred'];
+  filterSuggestions.innerHTML = '';
   tags.forEach((tag) => {
     const option = document.createElement('option');
     option.value = tag;
-    option.textContent = tag;
-    tagFilterSelect.appendChild(option);
+    filterSuggestions.appendChild(option);
   });
-  if (tags.includes(currentTagFilter)) {
-    tagFilterSelect.value = currentTagFilter;
-  } else {
-    currentTagFilter = 'all';
-    tagFilterSelect.value = 'all';
-  }
+  statusTokens.forEach((status) => {
+    const option = document.createElement('option');
+    option.value = status;
+    filterSuggestions.appendChild(option);
+  });
 }
 
 function renderTagChips(container, tags, onRemove) {
@@ -338,11 +334,78 @@ function getTagsForTodo(todo) {
   return Array.isArray(todo.tags) ? todo.tags : [];
 }
 
-function todoMatchesTag(todo, tag) {
-  if (!tag || tag === 'all') return true;
-  const tags = getTagsForTodo(todo);
-  const target = tag.toLowerCase();
-  return tags.some((value) => value.toLowerCase() === target);
+function getTodoStatus(todo) {
+  if (!todo || todo.isDraft) return 'draft';
+  const cache = editCache.get(todo.id);
+  if (cache && cache.status) return cache.status;
+  return todo.status || 'todo';
+}
+
+function getTodoSearchText(todo) {
+  const cache = editCache.get(todo.id);
+  const title = cache && cache.title ? cache.title : todo.title || '';
+  const body = cache && cache.body ? cache.body : todo.excerpt || '';
+  const tags = getTagsForTodo(todo).join(' ');
+  return `${title} ${body} ${tags}`.toLowerCase();
+}
+
+function parseFilterTokens(value) {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) {
+    return { tagTokens: [], textTokens: [], statusTokens: [] };
+  }
+  const tokens = raw.match(/[^\s,]+/g) || [];
+  const tagTokens = [];
+  const textTokens = [];
+  const statusTokens = [];
+  tokens.forEach((token) => {
+    const lower = token.toLowerCase();
+    if (lower === 'todo' || lower === 'done' || lower === 'deferred') {
+      statusTokens.push(lower);
+      return;
+    }
+    if (lower.startsWith('status:')) {
+      const status = lower.slice(7);
+      if (status === 'todo' || status === 'done' || status === 'deferred') {
+        statusTokens.push(status);
+        return;
+      }
+    }
+    if (lower.startsWith('#')) {
+      const tag = normalizeTag(token.slice(1));
+      if (tag) tagTokens.push(tag);
+      return;
+    }
+    if (lower.startsWith('tag:')) {
+      const tag = normalizeTag(token.slice(4));
+      if (tag) tagTokens.push(tag);
+      return;
+    }
+    textTokens.push(lower);
+  });
+  return {
+    tagTokens: uniqueTags(tagTokens),
+    textTokens: uniqueTags(textTokens),
+    statusTokens: uniqueTags(statusTokens),
+  };
+}
+
+function matchesTagFilters(todo, tagTokens) {
+  if (!tagTokens.length) return true;
+  const tags = getTagsForTodo(todo).map((value) => value.toLowerCase());
+  return tagTokens.every((token) => tags.includes(token.toLowerCase()));
+}
+
+function matchesTextFilters(todo, textTokens) {
+  if (!textTokens.length) return true;
+  const haystack = getTodoSearchText(todo);
+  return textTokens.every((token) => haystack.includes(token.toLowerCase()));
+}
+
+function matchesStatusFilters(todo, statusTokens) {
+  if (!statusTokens.length) return true;
+  const status = getTodoStatus(todo);
+  return statusTokens.includes(status);
 }
 
 function formatDateKey(date) {
@@ -724,21 +787,27 @@ function renderList() {
   listEl.innerHTML = '';
   let items = todos;
   const today = new Date();
-  if (currentTab === 'done') {
+  const filters = parseFilterTokens(currentFilterText);
+  if (filters.statusTokens.length) {
+    items = items.filter((todo) => matchesStatusFilters(todo, filters.statusTokens));
+  } else if (currentTab === 'done') {
     items = items.filter((todo) => !todo.isDraft && isDoneInDoneTab(todo, today));
   } else {
     items = items.filter((todo) => todo.isDraft || !isDoneInDoneTab(todo, today));
   }
-  if (currentTagFilter && currentTagFilter !== 'all') {
-    items = items.filter((todo) => todoMatchesTag(todo, currentTagFilter));
+  if (filters.tagTokens.length) {
+    items = items.filter((todo) => matchesTagFilters(todo, filters.tagTokens));
+  }
+  if (filters.textTokens.length) {
+    items = items.filter((todo) => matchesTextFilters(todo, filters.textTokens));
   }
   const overallEmpty = todos.length === 0 && !draft;
   appEl.classList.toggle('empty', overallEmpty);
   if (!items.length) {
     const empty = document.createElement('div');
     empty.className = 'todo-item';
-    if (currentTagFilter && currentTagFilter !== 'all') {
-      empty.textContent = `No todos tagged "${currentTagFilter}".`;
+    if (currentFilterText) {
+      empty.textContent = `No todos match "${currentFilterText}".`;
     } else {
       empty.textContent =
         currentTab === 'done'
@@ -1434,7 +1503,7 @@ async function loadTodos() {
   }
   updateTabLabels();
   updateTagSuggestions();
-  updateTagFilterOptions();
+  updateFilterSuggestions();
   renderList();
 }
 
@@ -2023,9 +2092,8 @@ sortSelect.addEventListener('change', async () => {
   renderList();
 });
 
-tagFilterSelect.addEventListener('change', async () => {
-  await autoSaveActive();
-  currentTagFilter = tagFilterSelect.value;
+filterInput.addEventListener('input', async () => {
+  currentFilterText = filterInput.value;
   renderList();
 });
 

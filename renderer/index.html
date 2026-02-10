@@ -26,8 +26,13 @@
             <button id="tabDone" class="tab">Done</button>
           </div>
           <div class="filter">
-            <label for="tagFilter">Tag</label>
-            <select id="tagFilter"></select>
+            <label for="filterInput">Filter</label>
+            <input
+              id="filterInput"
+              type="text"
+              list="filterSuggestions"
+              placeholder="tag, #tag, done, text"
+            />
           </div>
           <div class="sort">
             <label for="sortSelect">Sort</label>
@@ -209,6 +214,7 @@
         </div>
       </div>
       <datalist id="tagSuggestions"></datalist>
+      <datalist id="filterSuggestions"></datalist>
       <footer id="gitStatus" class="git-status hidden"></footer>
     </div>
     <script src="renderer.js"></script>
