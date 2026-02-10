@@ -23,7 +23,13 @@ function buildTodo(overrides: Partial<TodoListItem>): TodoListItem {
   };
 }
 
-function renderList(todos: TodoListItem[], filterText: string, currentTab: 'todo' | 'done' = 'todo') {
+function renderList(
+  todos: TodoListItem[],
+  filterText: string,
+  currentTab: 'todo' | 'done' = 'todo',
+  options: { dndEnabled?: boolean } = {}
+) {
+  const { dndEnabled = false } = options;
   render(
     <TodoList
       todos={todos}
@@ -33,7 +39,7 @@ function renderList(todos: TodoListItem[], filterText: string, currentTab: 'todo
       currentTab={currentTab}
       sortKey="due"
       filterText={filterText}
-      dndEnabled={false}
+      dndEnabled={dndEnabled}
       pendingDeleteId={null}
       onSelect={vi.fn()}
       onActivateField={vi.fn()}
@@ -89,5 +95,15 @@ describe('TodoList', () => {
 
     expect(screen.getByText('Complete')).toBeInTheDocument();
     expect(screen.queryByText('Pending')).not.toBeInTheDocument();
+  });
+
+  it('shows drop targets for empty sections when drag-and-drop is enabled', () => {
+    const todayKey = formatDateKey(new Date());
+    const todos = [buildTodo({ id: 'a', title: 'Today', due: todayKey })];
+
+    renderList(todos, '', 'todo', { dndEnabled: true });
+
+    expect(screen.getByText('Due today')).toBeInTheDocument();
+    expect(screen.getAllByText('Drop here')).toHaveLength(3);
   });
 });
