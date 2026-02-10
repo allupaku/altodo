@@ -10,8 +10,8 @@ import { createRollover } from './rollover';
 import { IPC_EVENTS } from '../shared/ipc/channels';
 import { listTodos } from './todosStore';
 
-const isDev = !app.isPackaged;
-const devServerUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+const devServerUrl = process.env.VITE_DEV_SERVER_URL || '';
+const isDev = Boolean(devServerUrl);
 
 let mainWindow: BrowserWindow | null = null;
 
