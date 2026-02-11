@@ -227,14 +227,7 @@ export function parseFilterTokens(value: string): FilterTokens {
         return;
       }
     }
-    if (lower.startsWith('#')) {
-      const tag = token.slice(1).trim();
-      if (tag) tagTokens.push(tag);
-      return;
-    }
-    if (lower.startsWith('tag:')) {
-      const tag = token.slice(4).trim();
-      if (tag) tagTokens.push(tag);
+    if (lower.startsWith('#') || lower.startsWith('tag:')) {
       return;
     }
     textTokens.push(lower);
@@ -278,8 +271,7 @@ export function matchesTextFilter(text: string, tokens: string[]) {
 export function buildSearchText(todo: TodoListItem, cache?: EditCache | null) {
   const title = cache?.title || todo.title || '';
   const body = cache?.body || todo.excerpt || '';
-  const tags = cache?.tags || todo.tags || [];
-  return `${title} ${body} ${tags.join(' ')}`.toLowerCase();
+  return `${title} ${body}`.toLowerCase();
 }
 
 export function collectAllTags(todos: TodoListItem[]) {

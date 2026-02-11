@@ -108,7 +108,7 @@ export default function TodoList({
   currentTab,
   sortKey,
   filterText,
-  tagFilters,
+  tagFilters = [],
   dndEnabled,
   pendingDeleteId,
   onSelect,
@@ -131,9 +131,6 @@ export default function TodoList({
 }: TodoListProps) {
   let items = todos.filter((todo) => !todo.isDraft);
   const filters = parseFilterTokens(filterText);
-  const combinedTagTokens = Array.from(
-    new Set([...filters.tagTokens, ...tagFilters].map((token) => token.toLowerCase()))
-  );
   if (filters.statusTokens.length) {
     items = items.filter((todo) => matchesStatusFilter(todo.status, filters.statusTokens));
   } else if (currentTab === 'done') {
@@ -141,8 +138,8 @@ export default function TodoList({
   } else {
     items = items.filter((todo) => !isDoneInDoneTab(todo));
   }
-  if (combinedTagTokens.length) {
-    items = items.filter((todo) => matchesTagFilter(todo.tags || [], combinedTagTokens));
+  if (tagFilters.length) {
+    items = items.filter((todo) => matchesTagFilter(todo.tags || [], tagFilters));
   }
   if (filters.textTokens.length) {
     items = items.filter((todo) => matchesTextFilter(buildSearchText(todo), filters.textTokens));

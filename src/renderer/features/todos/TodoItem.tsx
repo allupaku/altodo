@@ -89,16 +89,16 @@ export default function TodoItem({
   useEffect(() => {
     if (!titleRef.current) return;
     if (isEditingTitle) return;
-    if (titleRef.current.innerText !== titleValue) {
-      titleRef.current.innerText = titleValue;
+    if (titleRef.current.textContent !== titleValue) {
+      titleRef.current.textContent = titleValue;
     }
   }, [titleValue, isEditingTitle]);
 
   useEffect(() => {
     if (!bodyRef.current) return;
     if (isEditingBody) return;
-    if (bodyRef.current.innerText !== bodyValue) {
-      bodyRef.current.innerText = bodyValue;
+    if (bodyRef.current.textContent !== bodyValue) {
+      bodyRef.current.textContent = bodyValue;
     }
   }, [bodyValue, isEditingBody]);
 
@@ -162,7 +162,7 @@ export default function TodoItem({
             if (isActive) onActivateField('title');
           }}
           onInput={(event) => {
-            const next = (event.target as HTMLElement).innerText;
+            const next = (event.target as HTMLElement).textContent || '';
             onUpdateCache({ title: next });
           }}
         />
@@ -275,7 +275,7 @@ export default function TodoItem({
           if (isActive) onActivateField('body');
         }}
         onInput={(event) => {
-          const next = (event.target as HTMLElement).innerText;
+          const next = (event.target as HTMLElement).textContent || '';
           onUpdateCache({ body: next });
         }}
       />

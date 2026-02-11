@@ -12,7 +12,7 @@ import {
 describe('todoUtils filters', () => {
   it('parses multi token filters', () => {
     const result = parseFilterTokens('#work tag:boss done urgent');
-    expect(result.tagTokens).toEqual(['work', 'boss']);
+    expect(result.tagTokens).toEqual([]);
     expect(result.statusTokens).toEqual(['done']);
     expect(result.textTokens).toEqual(['urgent']);
   });

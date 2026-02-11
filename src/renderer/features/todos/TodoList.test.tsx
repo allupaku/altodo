@@ -27,9 +27,9 @@ function renderList(
   todos: TodoListItem[],
   filterText: string,
   currentTab: 'todo' | 'done' = 'todo',
-  options: { dndEnabled?: boolean } = {}
+  options: { dndEnabled?: boolean; tagFilters?: string[] } = {}
 ) {
-  const { dndEnabled = false } = options;
+  const { dndEnabled = false, tagFilters = [] } = options;
   render(
     <TodoList
       todos={todos}
@@ -39,6 +39,7 @@ function renderList(
       currentTab={currentTab}
       sortKey="due"
       filterText={filterText}
+      tagFilters={tagFilters}
       dndEnabled={dndEnabled}
       pendingDeleteId={null}
       onSelect={vi.fn()}
@@ -54,6 +55,7 @@ function renderList(
       onOpenTags={vi.fn()}
       onBulkDone={vi.fn()}
       onBulkDelete={vi.fn()}
+      onBulkMove={vi.fn()}
       onSuspendAutoSave={vi.fn()}
       onMoveDue={vi.fn().mockResolvedValue(undefined)}
       onReorder={vi.fn().mockResolvedValue(undefined)}
@@ -78,7 +80,7 @@ describe('TodoList', () => {
       buildTodo({ id: 'b', title: 'Follow up', tags: ['alice'], due: todayKey }),
     ];
 
-    renderList(todos, '#alice #report');
+    renderList(todos, '', 'todo', { tagFilters: ['alice', 'report'] });
 
     expect(screen.getByText('Write report')).toBeInTheDocument();
     expect(screen.queryByText('Follow up')).not.toBeInTheDocument();

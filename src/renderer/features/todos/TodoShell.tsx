@@ -6,7 +6,6 @@ import RecurrenceModal from './RecurrenceModal';
 import TagModal from './TagModal';
 import BatchAddModal from './BatchAddModal';
 import BulkMoveModal from './BulkMoveModal';
-import TagChips from './TagChips';
 import SettingsPanel from '../settings/SettingsPanel';
 import { isDoneInDoneTab } from './todoUtils';
 import { formatDateKey } from '../../../shared/utils/date';
@@ -37,17 +36,13 @@ export default function TodoShell() {
     actions,
   } = useTodoController();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [tagFilterInput, setTagFilterInput] = useState('');
   const [bulkMoveDraft, setBulkMoveDraft] = useState<{
     label: string;
     items: TodoListItem[];
     targetDate: string;
   } | null>(null);
 
-  const filterSuggestions = useMemo(() => {
-    const tags = allTags;
-    return Array.from(new Set([...tags, ...STATUS_SUGGESTIONS]));
-  }, [allTags]);
+  const filterSuggestions = useMemo(() => STATUS_SUGGESTIONS, []);
 
   const doneCount = todos.filter((todo) => isDoneInDoneTab(todo)).length;
   const todoCount = todos.filter((todo) => !isDoneInDoneTab(todo)).length + (draftCache ? 1 : 0);
@@ -64,20 +59,14 @@ export default function TodoShell() {
   const isEmpty = todos.length === 0 && !draftCache;
   const dndEnabled = sortKey === 'due' && currentTab === 'todo';
 
-  const tagSuggestions = useMemo(() => allTags, [allTags]);
-  const addTagFilter = (value: string) => {
-    const cleaned = value.trim().replace(/^#/, '');
-    if (!cleaned) return;
-    const next = Array.from(new Set([...tagFilters, cleaned]));
-    actions.setTagFilters(next);
-    setTagFilterInput('');
+  const toggleTagFilter = (tag: string) => {
+    if (tagFilters.includes(tag)) {
+      actions.setTagFilters(tagFilters.filter((item) => item !== tag));
+      return;
+    }
+    actions.setTagFilters([...tagFilters, tag]);
   };
-  const removeTagFilter = (value: string) => {
-    actions.setTagFilters(tagFilters.filter((tag) => tag !== value));
-  };
-  const clearTagFilters = () => {
-    actions.setTagFilters([]);
-  };
+  const clearTagFilters = () => actions.setTagFilters([]);
 
   const openBulkMove = (items: TodoListItem[], label: string) => {
     setBulkMoveDraft({ items, label, targetDate: formatDateKey(new Date()) });
@@ -120,38 +109,33 @@ export default function TodoShell() {
               id="filterInput"
               type="text"
               list="filterSuggestions"
-              placeholder="tag, #tag, done, text"
+              placeholder="status, text"
               value={filterText}
               onChange={(event) => actions.setFilterText(event.target.value)}
             />
           </div>
           <div className="tag-filter">
-            <label htmlFor="tagFilterInput">Tags</label>
-            <div className="tag-filter-row">
-              <input
-                id="tagFilterInput"
-                type="text"
-                list="tagFilterSuggestions"
-                placeholder="Add tag filter"
-                value={tagFilterInput}
-                onChange={(event) => setTagFilterInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ',') {
-                    event.preventDefault();
-                    addTagFilter(tagFilterInput);
-                  }
-                }}
-              />
-              <button className="ghost" type="button" onClick={() => addTagFilter(tagFilterInput)}>
-                Add
-              </button>
+            <div className="tag-filter-header">
+              <span>Tags</span>
               {tagFilters.length > 0 && (
                 <button className="ghost" type="button" onClick={clearTagFilters}>
                   Clear
                 </button>
               )}
             </div>
-            <TagChips tags={tagFilters} removable onRemove={removeTagFilter} />
+            <div className="tag-filter-list">
+              {allTags.length === 0 && <span className="tag-filter-empty">No tags yet</span>}
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={`tag-chip selectable ${tagFilters.includes(tag) ? 'selected' : ''}`}
+                  onClick={() => toggleTagFilter(tag)}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="sort">
             <label htmlFor="sortSelect">Sort</label>
@@ -276,11 +260,6 @@ export default function TodoShell() {
       />
       <datalist id="filterSuggestions">
         {filterSuggestions.map((item) => (
-          <option key={item} value={item} />
-        ))}
-      </datalist>
-      <datalist id="tagFilterSuggestions">
-        {tagSuggestions.map((item) => (
           <option key={item} value={item} />
         ))}
       </datalist>
