@@ -464,6 +464,7 @@ button:not(:disabled):hover {
   opacity: 1;
 }
 
+.done-toggle input.deferred,
 .done-toggle input.overdue {
   color: #fca5a5;
   border-color: #fca5a5;
@@ -495,9 +496,9 @@ button:not(:disabled):hover {
 }
 
 .recurrence-inline {
-  width: 52px;
-  height: 52px;
-  font-size: 26px;
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
   line-height: 1;
 }
 
@@ -526,6 +527,9 @@ button:not(:disabled):hover {
 .todo-meta {
   font-size: 12px;
   color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .todo-meta-row {

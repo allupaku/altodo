@@ -117,7 +117,7 @@ export default function TodoItem({
               type="checkbox"
               checked={statusValue === 'done'}
               onChange={(event) => onToggleDone(event.target.checked)}
-              className={showOverdue ? 'overdue' : ''}
+              className={isDeferred ? 'deferred' : showOverdue ? 'overdue' : ''}
             />
           </label>
         )}
