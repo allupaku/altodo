@@ -259,6 +259,7 @@ button:not(:disabled):hover {
   gap: 6px;
   font-size: 12px;
   color: var(--muted);
+  margin-left: auto;
 }
 
 .filter {
