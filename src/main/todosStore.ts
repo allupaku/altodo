@@ -178,22 +178,27 @@ function serializeBucket(dateKey: string, todos: StoredTodo[]) {
       updated: todo.updated || null,
     };
     const body = (todo.body || '').replace(/\r\n/g, '\n').replace(/\s+$/, '');
-    const metaLines = [
-      `### ${meta.title}`,
-      `- Status: ${meta.status}`,
-      `- Priority: ${meta.priority}`,
-      `- Repeat: ${meta.recurrence}`,
-      `- Repeat end: ${meta.recurrenceEnd || 'None'}`,
-      `- Repeat count: ${meta.recurrenceCount || 'None'}`,
-      `- Remind: ${meta.remind || 'none'}`,
-      `- Due: ${meta.due || 'None'}`,
-      `- Tags: ${meta.tags.length ? meta.tags.join(', ') : 'None'}`,
-      `- Order: ${meta.order ?? 'None'}`,
-      `- Created: ${meta.created || ''}`,
-      `- Updated: ${meta.updated || ''}`,
-      '---',
-      body,
-    ].join('\n');
+    const statusLabel = meta.status === 'done' ? 'Done' : meta.status === 'deferred' ? 'Deferred' : 'Todo';
+    const statusMark = meta.status === 'done' ? '[x]' : '[ ]';
+    const metaParts = [
+      `Status: ${statusLabel}`,
+      `Priority: ${meta.priority}`,
+      `Due: ${meta.due || 'None'}`,
+      meta.recurrence !== 'none' ? `Repeat: ${meta.recurrence}` : null,
+      meta.recurrenceEnd ? `Repeat end: ${meta.recurrenceEnd}` : null,
+      meta.recurrenceCount ? `Repeat count: ${meta.recurrenceCount}` : null,
+      meta.remind && meta.remind !== 'none' ? `Remind: ${meta.remind}` : null,
+      meta.tags.length ? `Tags: ${meta.tags.join(', ')}` : null,
+      meta.order !== null ? `Order: ${meta.order}` : null,
+      meta.created ? `Created: ${meta.created}` : null,
+      meta.updated ? `Updated: ${meta.updated}` : null,
+    ].filter(Boolean);
+    const metaLine = metaParts.length ? `_${metaParts.join(' | ')}_` : '';
+    const lines = [`### ${statusMark} ${meta.title}`];
+    if (metaLine) lines.push(metaLine);
+    lines.push('---');
+    lines.push(body);
+    const metaLines = lines.join('\n');
     return `<!-- todo: ${JSON.stringify(meta)} -->\n${metaLines}\n<!-- /todo -->`;
   });
   return `${header}\n\n${blocks.join('\n\n')}\n`;
