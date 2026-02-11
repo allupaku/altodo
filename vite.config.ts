@@ -23,5 +23,14 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: path.resolve(__dirname, 'src/renderer/test/setup.ts'),
     include: ['../shared/**/*.test.ts', '**/*.test.ts', '**/*.test.tsx'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      lines: 90,
+      statements: 90,
+      functions: 90,
+      branches: 90,
+      exclude: ['dist/**', 'node_modules/**'],
+    },
   },
 });
