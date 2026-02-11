@@ -37,13 +37,13 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.4.0",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^4.0.18",
     "concurrently": "^8.2.2",
     "electron": "^40.2.1",
     "jsdom": "^25.0.1",
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
-    "vitest": "^2.1.9",
+    "vitest": "^4.0.18",
     "wait-on": "^7.2.0"
   }
 }
