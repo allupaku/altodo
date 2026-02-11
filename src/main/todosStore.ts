@@ -200,7 +200,7 @@ function serializeBucket(dateKey: string, todos: StoredTodo[]) {
       meta.updated ? `Updated: ${meta.updated}` : null,
     ].filter(Boolean);
     const metaLine = metaParts.length ? `_${metaParts.join(' | ')}_` : '';
-    const lines = [`### ${statusMark} ${meta.title}`];
+    const lines = [`### ${statusMark} ${statusHtml} ${meta.title}`];
     if (metaLine) lines.push(metaLine);
     lines.push('---');
     lines.push(body);
