@@ -179,15 +179,9 @@ function serializeBucket(dateKey: string, todos: StoredTodo[]) {
     };
     const body = (todo.body || '').replace(/\r\n/g, '\n').replace(/\s+$/, '');
     const statusLabel = meta.status === 'done' ? 'Done' : meta.status === 'deferred' ? 'Deferred' : 'Todo';
-    const statusHtml =
-      meta.status === 'done'
-        ? '<span style="color:#16a34a;font-weight:600">Done</span>'
-        : meta.status === 'deferred'
-          ? '<span style="color:#f97316;font-weight:600">Deferred</span>'
-          : '<span style="color:#6b7280;font-weight:600">Todo</span>';
     const statusMark = meta.status === 'done' ? '[x]' : '[ ]';
     const metaParts = [
-      `Status: ${statusHtml}`,
+      `Status: ${statusLabel}`,
       `Priority: ${meta.priority}`,
       `Due: ${meta.due || 'None'}`,
       meta.recurrence !== 'none' ? `Repeat: ${meta.recurrence}` : null,
@@ -200,7 +194,7 @@ function serializeBucket(dateKey: string, todos: StoredTodo[]) {
       meta.updated ? `Updated: ${meta.updated}` : null,
     ].filter(Boolean);
     const metaLine = metaParts.length ? `_${metaParts.join(' | ')}_` : '';
-    const lines = [`### ${statusMark} ${statusHtml} ${meta.title}`];
+    const lines = [`### ${statusMark} ${meta.title}`];
     if (metaLine) lines.push(metaLine);
     lines.push('---');
     lines.push(body);
