@@ -32,6 +32,7 @@ interface UseTodoControllerResult {
   currentTab: TabKey;
   sortKey: SortKey;
   filterText: string;
+  tagFilters: string[];
   settings: AppSettings | null;
   displays: DisplayInfo[];
   gitStatus: GitStatus | null;
@@ -46,6 +47,7 @@ interface UseTodoControllerResult {
     setCurrentTab: (tab: TabKey) => void;
     setSortKey: (key: SortKey) => void;
     setFilterText: (value: string) => void;
+    setTagFilters: (tags: string[]) => void;
     triggerNewTodo: () => void;
     selectTodo: (todo: TodoListItem) => void;
     activateField: (field: EditCache['activeField']) => void;
@@ -75,6 +77,7 @@ interface UseTodoControllerResult {
     reloadTodos: () => Promise<void>;
     bulkMarkDone: (items: TodoListItem[], label: string) => Promise<void>;
     bulkDelete: (items: TodoListItem[], label: string) => Promise<void>;
+    bulkMoveDue: (items: TodoListItem[], targetDue: string | null) => Promise<void>;
     setSuspendAutoSave: (value: boolean) => void;
     moveTodoDue: (id: string, due: string | null, order?: number | null) => Promise<void>;
     reorderTodos: (ids: string[]) => Promise<void>;
@@ -137,6 +140,7 @@ export function useTodoController(): UseTodoControllerResult {
   const [currentTab, setCurrentTab] = useState<TabKey>('todo');
   const [sortKey, setSortKey] = useState<SortKey>('due');
   const [filterText, setFilterText] = useState('');
+  const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [settings, setSettingsState] = useState<AppSettings | null>(null);
   const [displays, setDisplays] = useState<DisplayInfo[]>([]);
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
@@ -571,6 +575,17 @@ export function useTodoController(): UseTodoControllerResult {
     await reloadTodos();
   }
 
+  async function bulkMoveDue(items: TodoListItem[], targetDue: string | null) {
+    if (!items.length) return;
+    const targetItems = todos.filter((todo) => (todo.due || null) === targetDue);
+    let order = targetItems.reduce((max, todo) => Math.max(max, todo.order ?? 0), 0);
+    for (const todo of items) {
+      order += 1;
+      await api.moveTodoDue(todo.id, targetDue, order);
+    }
+    await reloadTodos();
+  }
+
   async function moveTodoDue(id: string, due: string | null, order?: number | null) {
     await api.moveTodoDue(id, due, order ?? null);
     await reloadTodos();
@@ -675,6 +690,7 @@ export function useTodoController(): UseTodoControllerResult {
     currentTab,
     sortKey,
     filterText,
+    tagFilters,
     settings,
     displays,
     gitStatus,
@@ -689,6 +705,7 @@ export function useTodoController(): UseTodoControllerResult {
       setCurrentTab: changeTab,
       setSortKey: changeSort,
       setFilterText,
+      setTagFilters,
       triggerNewTodo,
       selectTodo,
       activateField,
@@ -718,6 +735,7 @@ export function useTodoController(): UseTodoControllerResult {
       reloadTodos,
       bulkMarkDone,
       bulkDelete,
+      bulkMoveDue,
       setSuspendAutoSave: (value: boolean) => {
         suspendAutoSave.current = value;
       },

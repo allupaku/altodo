@@ -6,6 +6,7 @@ interface SectionHeaderProps {
   items: TodoListItem[];
   onBulkDone: () => void;
   onBulkDelete: () => void;
+  onBulkMove: () => void;
   showWhenEmpty?: boolean;
 }
 
@@ -14,6 +15,7 @@ export default function SectionHeader({
   items,
   onBulkDone,
   onBulkDelete,
+  onBulkMove,
   showWhenEmpty = false,
 }: SectionHeaderProps) {
   if (!items.length && !showWhenEmpty) return null;
@@ -38,6 +40,14 @@ export default function SectionHeader({
               onClick={onBulkDelete}
             >
               🧹
+            </button>
+            <button
+              className="icon plain"
+              title={`Move ${label} todos`}
+              type="button"
+              onClick={onBulkMove}
+            >
+              ⇢
             </button>
           </>
         )}

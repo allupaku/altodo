@@ -5,8 +5,12 @@ import DraftModal from './DraftModal';
 import RecurrenceModal from './RecurrenceModal';
 import TagModal from './TagModal';
 import BatchAddModal from './BatchAddModal';
+import BulkMoveModal from './BulkMoveModal';
+import TagChips from './TagChips';
 import SettingsPanel from '../settings/SettingsPanel';
 import { isDoneInDoneTab } from './todoUtils';
+import { formatDateKey } from '../../../shared/utils/date';
+import type { TodoListItem } from '../../../shared/models/todo';
 
 const STATUS_SUGGESTIONS = ['todo', 'done', 'deferred'];
 
@@ -19,6 +23,7 @@ export default function TodoShell() {
     currentTab,
     sortKey,
     filterText,
+    tagFilters,
     settings,
     displays,
     gitStatus,
@@ -32,16 +37,20 @@ export default function TodoShell() {
     actions,
   } = useTodoController();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tagFilterInput, setTagFilterInput] = useState('');
+  const [bulkMoveDraft, setBulkMoveDraft] = useState<{
+    label: string;
+    items: TodoListItem[];
+    targetDate: string;
+  } | null>(null);
 
   const filterSuggestions = useMemo(() => {
     const tags = allTags;
     return Array.from(new Set([...tags, ...STATUS_SUGGESTIONS]));
   }, [allTags]);
 
-  const today = new Date();
-  const doneCount = todos.filter((todo) => isDoneInDoneTab(todo, today)).length;
-  const todoCount =
-    todos.filter((todo) => !isDoneInDoneTab(todo, today)).length + (draftCache ? 1 : 0);
+  const doneCount = todos.filter((todo) => isDoneInDoneTab(todo)).length;
+  const todoCount = todos.filter((todo) => !isDoneInDoneTab(todo)).length + (draftCache ? 1 : 0);
 
   const gitStatusLine = gitStatus
     ? gitStatus.enabled
@@ -54,6 +63,30 @@ export default function TodoShell() {
     : '';
   const isEmpty = todos.length === 0 && !draftCache;
   const dndEnabled = sortKey === 'due' && currentTab === 'todo';
+
+  const tagSuggestions = useMemo(() => allTags, [allTags]);
+  const addTagFilter = (value: string) => {
+    const cleaned = value.trim().replace(/^#/, '');
+    if (!cleaned) return;
+    const next = Array.from(new Set([...tagFilters, cleaned]));
+    actions.setTagFilters(next);
+    setTagFilterInput('');
+  };
+  const removeTagFilter = (value: string) => {
+    actions.setTagFilters(tagFilters.filter((tag) => tag !== value));
+  };
+  const clearTagFilters = () => {
+    actions.setTagFilters([]);
+  };
+
+  const openBulkMove = (items: TodoListItem[], label: string) => {
+    setBulkMoveDraft({ items, label, targetDate: formatDateKey(new Date()) });
+  };
+  const confirmBulkMove = async () => {
+    if (!bulkMoveDraft) return;
+    await actions.bulkMoveDue(bulkMoveDraft.items, bulkMoveDraft.targetDate || null);
+    setBulkMoveDraft(null);
+  };
 
   return (
     <div id="app" className={isEmpty ? 'empty' : ''}>
@@ -92,6 +125,34 @@ export default function TodoShell() {
               onChange={(event) => actions.setFilterText(event.target.value)}
             />
           </div>
+          <div className="tag-filter">
+            <label htmlFor="tagFilterInput">Tags</label>
+            <div className="tag-filter-row">
+              <input
+                id="tagFilterInput"
+                type="text"
+                list="tagFilterSuggestions"
+                placeholder="Add tag filter"
+                value={tagFilterInput}
+                onChange={(event) => setTagFilterInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ',') {
+                    event.preventDefault();
+                    addTagFilter(tagFilterInput);
+                  }
+                }}
+              />
+              <button className="ghost" type="button" onClick={() => addTagFilter(tagFilterInput)}>
+                Add
+              </button>
+              {tagFilters.length > 0 && (
+                <button className="ghost" type="button" onClick={clearTagFilters}>
+                  Clear
+                </button>
+              )}
+            </div>
+            <TagChips tags={tagFilters} removable onRemove={removeTagFilter} />
+          </div>
           <div className="sort">
             <label htmlFor="sortSelect">Sort</label>
             <select
@@ -115,6 +176,7 @@ export default function TodoShell() {
             currentTab={currentTab}
             sortKey={sortKey}
             filterText={filterText}
+            tagFilters={tagFilters}
             dndEnabled={dndEnabled}
             pendingDeleteId={pendingDeleteId}
             onSelect={actions.selectTodo}
@@ -130,6 +192,7 @@ export default function TodoShell() {
             onOpenTags={actions.openTagModal}
             onBulkDone={actions.bulkMarkDone}
             onBulkDelete={actions.bulkDelete}
+            onBulkMove={openBulkMove}
             onSuspendAutoSave={actions.setSuspendAutoSave}
             onMoveDue={actions.moveTodoDue}
             onReorder={actions.reorderTodos}
@@ -199,8 +262,25 @@ export default function TodoShell() {
         onClose={actions.closeBatch}
         onSave={actions.saveBatch}
       />
+      <BulkMoveModal
+        open={Boolean(bulkMoveDraft)}
+        label={bulkMoveDraft?.label || ''}
+        count={bulkMoveDraft?.items.length || 0}
+        targetDate={bulkMoveDraft?.targetDate || ''}
+        onChangeDate={(value) => {
+          if (!bulkMoveDraft) return;
+          setBulkMoveDraft({ ...bulkMoveDraft, targetDate: value });
+        }}
+        onClose={() => setBulkMoveDraft(null)}
+        onConfirm={confirmBulkMove}
+      />
       <datalist id="filterSuggestions">
         {filterSuggestions.map((item) => (
+          <option key={item} value={item} />
+        ))}
+      </datalist>
+      <datalist id="tagFilterSuggestions">
+        {tagSuggestions.map((item) => (
           <option key={item} value={item} />
         ))}
       </datalist>

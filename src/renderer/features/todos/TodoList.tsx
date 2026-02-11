@@ -78,6 +78,7 @@ interface TodoListProps {
   currentTab: TabKey;
   sortKey: SortKey;
   filterText: string;
+  tagFilters: string[];
   dndEnabled: boolean;
   pendingDeleteId: string | null;
   onSelect: (todo: TodoListItem) => void;
@@ -93,6 +94,7 @@ interface TodoListProps {
   onOpenTags: (todo: TodoListItem) => void;
   onBulkDone: (items: TodoListItem[], label: string) => void;
   onBulkDelete: (items: TodoListItem[], label: string) => void;
+  onBulkMove: (items: TodoListItem[], label: string) => void;
   onSuspendAutoSave: (value: boolean) => void;
   onMoveDue: (id: string, due: string | null, order?: number | null) => Promise<void>;
   onReorder: (ids: string[]) => Promise<void>;
@@ -106,6 +108,7 @@ export default function TodoList({
   currentTab,
   sortKey,
   filterText,
+  tagFilters,
   dndEnabled,
   pendingDeleteId,
   onSelect,
@@ -121,22 +124,25 @@ export default function TodoList({
   onOpenTags,
   onBulkDone,
   onBulkDelete,
+  onBulkMove,
   onSuspendAutoSave,
   onMoveDue,
   onReorder,
 }: TodoListProps) {
-  const today = new Date();
   let items = todos.filter((todo) => !todo.isDraft);
   const filters = parseFilterTokens(filterText);
+  const combinedTagTokens = Array.from(
+    new Set([...filters.tagTokens, ...tagFilters].map((token) => token.toLowerCase()))
+  );
   if (filters.statusTokens.length) {
     items = items.filter((todo) => matchesStatusFilter(todo.status, filters.statusTokens));
   } else if (currentTab === 'done') {
-    items = items.filter((todo) => isDoneInDoneTab(todo, today));
+    items = items.filter((todo) => isDoneInDoneTab(todo));
   } else {
-    items = items.filter((todo) => !isDoneInDoneTab(todo, today));
+    items = items.filter((todo) => !isDoneInDoneTab(todo));
   }
-  if (filters.tagTokens.length) {
-    items = items.filter((todo) => matchesTagFilter(todo.tags || [], filters.tagTokens));
+  if (combinedTagTokens.length) {
+    items = items.filter((todo) => matchesTagFilter(todo.tags || [], combinedTagTokens));
   }
   if (filters.textTokens.length) {
     items = items.filter((todo) => matchesTextFilter(buildSearchText(todo), filters.textTokens));
@@ -156,6 +162,7 @@ export default function TodoList({
   }
 
   if (currentTab === 'todo') {
+    const today = new Date();
     const { sections, todayKey, tomorrowKey, endOfWeekKey, nextWeekKey, isFriday } = buildSections(today);
     const bucketed: Record<string, TodoListItem[]> = {};
     sections.forEach((section) => {
@@ -252,6 +259,7 @@ export default function TodoList({
                   items={sectionItems}
                   onBulkDone={() => onBulkDone(sectionItems, section.label)}
                   onBulkDelete={() => onBulkDelete(sectionItems, section.label)}
+                  onBulkMove={() => onBulkMove(sectionItems, section.label)}
                 />
                 {renderSectionItems(sectionItems, rowIndexRef)}
               </React.Fragment>
@@ -271,6 +279,7 @@ export default function TodoList({
               items={sectionItems}
               onBulkDone={() => onBulkDone(sectionItems, section.label)}
               onBulkDelete={() => onBulkDelete(sectionItems, section.label)}
+              onBulkMove={() => onBulkMove(sectionItems, section.label)}
               showWhenEmpty
             />
             <SectionDroppable id={`section:${section.key}`}>

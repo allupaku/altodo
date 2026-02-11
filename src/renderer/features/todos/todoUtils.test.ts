@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   computeCountFromEndDate,
   computeEndDateFromCount,
+  isDoneInDoneTab,
   matchesTagFilter,
   matchesTextFilter,
   parseBatchInput,
@@ -25,6 +26,27 @@ describe('todoUtils filters', () => {
     expect(matchesTextFilter('review budget report', ['budget'])).toBe(true);
     expect(matchesTextFilter('review budget report', ['budget', 'report'])).toBe(true);
     expect(matchesTextFilter('review budget report', ['budget', 'urgent'])).toBe(false);
+  });
+
+  it('treats any done item as done tab eligible', () => {
+    const base = {
+      id: '1',
+      title: 'Test',
+      due: null,
+      status: 'todo' as const,
+      remind: 'none',
+      priority: 'normal' as const,
+      recurrence: 'none' as const,
+      recurrenceEnd: null,
+      recurrenceCount: null,
+      tags: [],
+      createdMs: null,
+      updatedMs: null,
+      excerpt: '',
+      order: null,
+    };
+    expect(isDoneInDoneTab({ ...base, status: 'done' })).toBe(true);
+    expect(isDoneInDoneTab({ ...base, status: 'todo' })).toBe(false);
   });
 });
 

@@ -83,11 +83,8 @@ export function sortItems(items: TodoListItem[], sortKey: SortKey, tab: TabKey) 
   });
 }
 
-export function isDoneInDoneTab(todo: TodoListItem, today: Date) {
-  if (todo.status !== 'done') return false;
-  if (!todo.due) return false;
-  const yesterdayKey = formatDateKey(addDays(today, -1));
-  return todo.due === yesterdayKey;
+export function isDoneInDoneTab(todo: TodoListItem) {
+  return todo.status === 'done';
 }
 
 export function getSectionKey(
