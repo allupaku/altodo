@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useTodoController } from './useTodoController';
 import TodoList from './TodoList';
 import DraftModal from './DraftModal';
@@ -10,8 +10,6 @@ import SettingsPanel from '../settings/SettingsPanel';
 import { isDoneInDoneTab } from './todoUtils';
 import { formatDateKey } from '../../../shared/utils/date';
 import type { TodoListItem } from '../../../shared/models/todo';
-
-const STATUS_SUGGESTIONS = ['todo', 'done', 'deferred'];
 
 export default function TodoShell() {
   const {
@@ -42,7 +40,6 @@ export default function TodoShell() {
     targetDate: string;
   } | null>(null);
 
-  const filterSuggestions = useMemo(() => STATUS_SUGGESTIONS, []);
 
   const doneCount = todos.filter((todo) => isDoneInDoneTab(todo)).length;
   const todoCount = todos.filter((todo) => !isDoneInDoneTab(todo)).length + (draftCache ? 1 : 0);
@@ -108,7 +105,6 @@ export default function TodoShell() {
             <input
               id="filterInput"
               type="text"
-              list="filterSuggestions"
               placeholder="status, text"
               value={filterText}
               onChange={(event) => actions.setFilterText(event.target.value)}
@@ -258,11 +254,6 @@ export default function TodoShell() {
         onClose={() => setBulkMoveDraft(null)}
         onConfirm={confirmBulkMove}
       />
-      <datalist id="filterSuggestions">
-        {filterSuggestions.map((item) => (
-          <option key={item} value={item} />
-        ))}
-      </datalist>
     </div>
   );
 }
