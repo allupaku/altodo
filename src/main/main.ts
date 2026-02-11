@@ -65,7 +65,6 @@ function main() {
   mainWindow = windowManager.createWindow();
   todosWatcher.start();
   reminders.scheduleReminders().catch(() => {});
-  rollover.rolloverTodayToTomorrow().catch(() => {});
   rollover.scheduleDailyRollover();
   gitSync.notifyStatus().catch(() => {});
 
